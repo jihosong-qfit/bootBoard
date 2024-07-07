@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        
+<mapper namespace="Member">
+    <select id="findById" parameterType="string" resultType="member">
+        SELECT member_id, name, nickname, password, role
+        FROM member
+        WHERE member_id = #{memberId}
+    </select>
+    <insert id="memberSave" parameterType="member">
+        INSERT INTO member (member_id, name, nickname, password)
+        VALUES (#{memberId}, #{name}, #{nickname}, #{password})
+    </insert>
+    <select id="findAll" resultType="member">
+        SELECT member_id as memberId, name, role
+        FROM member
+    </select>
+    <select id="searchName" parameterType="string" resultType="member">
+        SELECT member_id AS memberId, name, role
+        FROM member
+        WHERE name LIKE '%' || #{name} || '%'
+    </select>
+</mapper>        

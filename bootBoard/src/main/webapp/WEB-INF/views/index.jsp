@@ -8,7 +8,10 @@
 </head>
 <body>
 Hello, SpringBoot!
-새로 작성한 글
-<a href="/save">글작성</a>
+<a href="/board/save">글작성</a>
+<a href="/board/">글목록</a>
+<a href="/member/login">로그인</a>
+<a href="/member/join">회원가입</a>
+<a href="/admin/adminPage">관리자페이지</a>
 </body>
 </html>

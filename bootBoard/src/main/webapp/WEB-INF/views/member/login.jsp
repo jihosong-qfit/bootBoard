@@ -4,7 +4,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>게시글 작성 페이지</title>
+<title>로그인 페이지</title>
 <style>
     body {
         display: flex;
@@ -15,10 +15,9 @@
         font-family: Arial, sans-serif;
     }
     .container {
-        width: 80%;
-        max-width: 800px;
-        border: 1px solid #ccc;
+        width: 300px;
         padding: 20px;
+        border: 1px solid #ccc;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         border-radius: 10px;
         background-color: #f9f9f9;
@@ -31,8 +30,7 @@
         font-weight: bold;
         margin-bottom: 5px;
     }
-    .form-group input[type="text"], 
-    .form-group textarea {
+    .form-group input[type="text"], .form-group input[type="password"] {
         width: 100%;
         padding: 10px;
         font-size: 16px;
@@ -40,11 +38,7 @@
         border-radius: 5px;
         box-sizing: border-box;
     }
-    .form-group textarea {
-        height: 200px;
-    }
     .form-group input[type="submit"] {
-        display: block;
         width: 100%;
         padding: 10px;
         font-size: 18px;
@@ -57,26 +51,44 @@
     .form-group input[type="submit"]:hover {
         background-color: #0056b3;
     }
+    .link {
+        text-align: right;
+        margin-top: 20px;
+    }
+    .link a {
+        text-decoration: none;
+        color: #007bff;
+    }
+    .link a:hover {
+        text-decoration: underline;
+    }
+    .error {
+        color: red;
+        margin-bottom: 15px;
+        text-align: center;
+    }
 </style>
 </head>
 <body>
 <div class="container">
-    <form action="/board/save" method="post">
+    <form action="/member/login" method="post">
         <div class="form-group">
-            <label for="title">제목:</label>
-            <input type="text" id="title" name="title">
+            <label for="memberId">아이디:</label>
+            <input type="text" id="memberId" name="memberId">
         </div>
         <div class="form-group">
-            <label for="writer">작성자:</label>
-            <input type="text" id="writer" name="writer">
+            <label for="password">비밀번호:</label>
+            <input type="password" id="password" name="password">
         </div>
         <div class="form-group">
-            <label for="content">내용:</label>
-            <textarea id="content" name="content" placeholder="내용을 입력하세요"></textarea>
+            <input type="submit" value="로그인">
         </div>
-        <div class="form-group">
-            <input type="submit" value="작성">
-        </div>
+        <div class="link">
+        	<a href="/member/join">회원가입</a>
+    	</div>
+        <c:if test="${not empty error}">
+            <div class="error">${error}</div>
+        </c:if>
     </form>
 </div>
 </body>
