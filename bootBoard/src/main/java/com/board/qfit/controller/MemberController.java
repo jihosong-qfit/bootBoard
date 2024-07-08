@@ -97,7 +97,7 @@ public class MemberController {
         memberDTO.setNickname(nickname);
         memberDTO.setPassword(password);
 
-        //회원가입하고나서 success 기본 반환
+        //회원가입하고나서 success 화면으로 전달해서 회원가입 완료!
         memberService.memberSave(memberDTO);
         response.put("success", true);
         
