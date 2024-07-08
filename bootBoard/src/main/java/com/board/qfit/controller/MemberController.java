@@ -1,9 +1,13 @@
 package com.board.qfit.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -65,20 +69,25 @@ public class MemberController {
 
     //회원가입 버튼
     @PostMapping("/join")
-    public String join(@RequestParam String memberId,
+    @ResponseBody
+    public Map<String, Object> join(@RequestParam String memberId,
                              @RequestParam String name,
                              @RequestParam String nickname,
                              @RequestParam String password,
-                             @RequestParam String confirmPassword,
-                             Model model) {
+                             @RequestParam String confirmPassword) {
+    	
+    	Map<String, Object> response = new HashMap<String, Object>();
+    	
         if (!password.equals(confirmPassword)) {
-            model.addAttribute("error", "비밀번호가 일치하지 않습니다.\n다시 입력해주세요.");
-            return "member/joinForm";
+        	response.put("success", false);
+        	response.put("error", "비밀번호가 일치하지 않습니다. 다시 입력해주세요.");
+        	return response;
         }
 
         if (memberService.isMemberIdExist(memberId)) {
-            model.addAttribute("error", "중복된 아이디입니다.\n다른 아이디로 입력해주세요!");
-            return "member/joinForm";
+        	response.put("success", false);
+        	response.put("error", "중복된 아이디입니다. 다른 아이디로 입력해주세요!");
+        	return response;
         }
         
         MemberDTO memberDTO = new MemberDTO();
@@ -88,8 +97,11 @@ public class MemberController {
         memberDTO.setNickname(nickname);
         memberDTO.setPassword(password);
 
+        //회원가입하고나서 success 기본 반환
         memberService.memberSave(memberDTO);
-        return "redirect:/member/login";
+        response.put("success", true);
+        
+        return response;
     }
     
     //로그아웃
@@ -108,4 +120,5 @@ public class MemberController {
     public boolean checkId(@RequestParam String memberId) {
         return memberService.isMemberIdExist(memberId);
     }
+    
 }

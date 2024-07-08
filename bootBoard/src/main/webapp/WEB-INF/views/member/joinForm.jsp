@@ -96,13 +96,36 @@ $(document).ready(function() {
             }
         });
     });
+
+$("#signupForm").on("submit", function(event) {
+	    event.preventDefault(); // 기본 폼 제출을 방지
+	    var formData = $(this).serialize();
+	    $.ajax({
+	        url: "/member/join",
+	        type: "POST",
+	        data: formData,
+	        dataType: 'json',
+	        success: function(response) {
+	            if (response.success) {
+	                alert("회원가입이 완료되었습니다");
+	                window.location.href = "/member/login"; // 로그인 페이지로 리다이렉트.
+	            } else {
+	                $("#idError").text(response.error);
+	            }
+	        },
+	        error: function(xhr, status, error) {
+	            alert("서버와의 통신에 실패했습니다.");
+	        }
+	    });
+	});
 });
+
 </script>
 </head>
 <body>
 <div class="container">
     <h2>회원가입</h2>
-    <form action="/member/join" method="post">
+    <form id="signupForm" action="/member/join" method="post">
         <table>
             <tr>
                 <th>아이디(필수)</th>
