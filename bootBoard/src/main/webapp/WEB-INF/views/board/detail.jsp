@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -74,6 +75,40 @@
     .btn-red:hover {
         background-color: #c82333;
     }
+    .comment-section {
+        margin-top: 40px;
+    }
+    .comment-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .comment-form input, .comment-form textarea {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+    .comment-form textarea {
+        resize: vertical;
+    }
+    .comment {
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
+    }
+    .comment .comment-header {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .comment .comment-content {
+        white-space: pre-wrap;
+    }
 </style>
 <script>
     function deleteBoard(boardno) {
@@ -81,10 +116,22 @@
             location.href = '/board/delete?boardno=' + boardno;
         }
     }
+    
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const contentElement = document.getElementById('board-content');
+        const content = contentElement.innerText;
+
+        if (content.length > 1000) {
+            contentElement.innerText = content.substring(0, 1000) + '...';
+            alert('내용은 1000자 제한입니다');
+        }
+    });
+
 </script>
 </head>
 <body>
 <div class="container">
+
     <h2>게시글 상세</h2>
     <table>
         <tr>
@@ -97,7 +144,7 @@
         </tr>
         <tr>
             <th>내용</th>
-            <td><pre style="font-family: inherit;">${board.content}</pre></td>
+            <td><pre id="board-content" style="font-family: inherit;">${board.content}</pre></td>
         </tr>
         <tr>
             <th>작성일</th>
@@ -108,11 +155,44 @@
             <td>${board.hit}</td>
         </tr>
     </table>
+    
+    <!-- 뒤로가기, 수정버튼, 삭제버튼  -->
     <div class="form-group">
         <input type="button" value="목록으로" class="btn-blue" onclick="location.href='/board/'">
         <input type="button" value="수정하기" class="btn-green" onclick="location.href='/board/update?boardno=${board.boardno}'">
         <input type="button" value="삭제하기" class="btn-red" onclick="deleteBoard(${board.boardno})">
     </div>
+    
+    <!-- 댓글 작성 -->
+    <div class="comment-section">
+    
+        <h3>댓글</h3>
+        
+        <form class="comment-form" action="/comment/addComment" method="post">
+            <input type="hidden" name="boardno" value="${board.boardno}">
+            <input type="hidden" name="writer" value="${sessionScope.username}">
+            <label for="comment-writer">작성자:</label>
+            <input type="text" id="comment-writer" name="writer" value="${sessionScope.username}" readonly>
+            <label for="comment-content">내용:</label>
+            <textarea id="comment-content" name="content" rows="4" required></textarea>
+            <input type="submit" value="댓글 작성" class="btn-green">
+        </form>
+        
+        <!-- 댓글 리스트 -->
+        <div class="comment-list">
+            <c:forEach var="comment" items="${comments}">
+                <div class="comment">
+                <div class="comment-header">
+	                <span>${comment.writer}</span>
+	                <span><fmt:formatDate value="${comment.createdate}" pattern="yy-MM-dd HH:mm:ss"/></span>
+                </div>
+                <div class="comment-content">${comment.content}</div>
+                </div>
+            </c:forEach>
+        </div>
+        
+    </div>
+    
 </div>
 </body>
 </html>

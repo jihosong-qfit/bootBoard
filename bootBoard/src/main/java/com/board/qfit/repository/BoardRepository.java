@@ -1,4 +1,4 @@
-package com.board.qfit.dao;
+package com.board.qfit.repository;
 
 import java.util.List;
 import java.util.Map;
@@ -8,14 +8,13 @@ import org.springframework.stereotype.Repository;
 
 import com.board.qfit.dto.BoardDTO;
 
+import lombok.RequiredArgsConstructor;
+
 @Repository
+@RequiredArgsConstructor
 public class BoardRepository {
 	
 	private final SqlSessionTemplate sql;
-	
-	public BoardRepository(SqlSessionTemplate sql) {
-		this.sql = sql;
-	}
 	
 	//게시글 등록
 	public int save(BoardDTO boardDTO) {

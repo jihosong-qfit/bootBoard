@@ -1,4 +1,4 @@
-package com.board.qfit.dao;
+package com.board.qfit.repository;
 
 import java.util.List;
 
@@ -7,13 +7,12 @@ import org.springframework.stereotype.Repository;
 
 import com.board.qfit.dto.MemberDTO;
 
+import lombok.RequiredArgsConstructor;
+
 @Repository
+@RequiredArgsConstructor //초기화되지 않은 final 필드 생성
 public class MemberRepository {
     private final SqlSessionTemplate sql;
-
-    public MemberRepository(SqlSessionTemplate sql) {
-        this.sql = sql;
-    }
 
     public MemberDTO findById(String memberId) {
         return sql.selectOne("Member.findById", memberId);

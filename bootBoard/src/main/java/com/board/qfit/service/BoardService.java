@@ -6,17 +6,16 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.board.qfit.dao.BoardRepository;
 import com.board.qfit.dto.BoardDTO;
+import com.board.qfit.repository.BoardRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class BoardService {
 	
 	private final BoardRepository boardRepository;
-	
-	public BoardService(BoardRepository boardRepository) {
-		this.boardRepository = boardRepository;
-	}
 
 	//게시글 등록
 	public int save(BoardDTO boardDTO) {

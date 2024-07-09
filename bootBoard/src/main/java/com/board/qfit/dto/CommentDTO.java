@@ -9,13 +9,12 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class BoardDTO {
-	
+public class CommentDTO {
+
+	private Long id;
 	private Long boardno;
-	private String title;
 	private String writer;
 	private String content;
-	private String createdate;
-	private int hit;
+	private Timestamp createdate;
 	
 }

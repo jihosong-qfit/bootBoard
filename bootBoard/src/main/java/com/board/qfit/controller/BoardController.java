@@ -2,6 +2,7 @@ package com.board.qfit.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,19 +12,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.board.qfit.dto.BoardDTO;
+import com.board.qfit.dto.CommentDTO;
+import com.board.qfit.repository.BoardRepository;
 import com.board.qfit.service.BoardService;
+import com.board.qfit.service.CommentService;
+
+import lombok.RequiredArgsConstructor;
 
 
 @Controller
 @RequestMapping("/board")
+@RequiredArgsConstructor
 public class BoardController {
 	
 	private final BoardService boardService;
 	
-	public BoardController(BoardService boardService) {
-		this.boardService = boardService;
-	}
-	
+	private final CommentService commentService;
+		
 	//게시글 작성 화면
 	@GetMapping("/save")
 	public String save() {
@@ -64,14 +69,16 @@ public class BoardController {
         return "board/list";
     }
 	
-	//게시글 상세
+	//게시글 상세 + 댓글 조회
 	@GetMapping
 	public String findById(@RequestParam("boardno") Long boardno, Model model) {
 		//1. 조회수가 올라가고 나서
 		boardService.updateHits(boardno);
 		//2. 게시물의 정보를 가져온다.
 		BoardDTO boardDTO = boardService.findById(boardno);
+		List<CommentDTO> comments = commentService.showComment(boardno);
 		model.addAttribute("board", boardDTO);
+		model.addAttribute("comments", comments);
 		return "board/detail";
 	}
 	
@@ -106,6 +113,7 @@ public class BoardController {
         model.addAttribute("boardList", boardDTOList);
         return "board/list";
     }
+	
 	
 	
 }

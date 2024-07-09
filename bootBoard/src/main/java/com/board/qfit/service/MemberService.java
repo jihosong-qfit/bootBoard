@@ -2,20 +2,20 @@ package com.board.qfit.service;
 
 import java.util.List;
 
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.board.qfit.dao.MemberRepository;
 import com.board.qfit.dto.MemberDTO;
+import com.board.qfit.repository.MemberRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class MemberService {
 	
     private final MemberRepository memberRepository;
-
-    public MemberService(MemberRepository memberRepository) {
-        this.memberRepository = memberRepository;
-    }
 
     public MemberDTO findById(String memberId) {
         return memberRepository.findById(memberId);
