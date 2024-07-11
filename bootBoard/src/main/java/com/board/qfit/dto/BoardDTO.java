@@ -17,5 +17,6 @@ public class BoardDTO {
 	private String content;
 	private String createdate;
 	private int hit;
+	private String memberId;
 	
 }

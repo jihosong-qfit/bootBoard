@@ -36,4 +36,11 @@ public class AdminController {
         model.addAttribute("memberList", memberList);
         return "admin/adminPage";
     }
+	
+	//사용자 정보 삭제
+	@GetMapping("/delete")
+	public String delete(@RequestParam("memberId") String memberId) {
+		memberService.deleteMember(memberId);
+		return "redirect:/admin/adminPage";
+	}
 }

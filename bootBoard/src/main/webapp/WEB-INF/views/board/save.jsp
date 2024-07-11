@@ -57,22 +57,27 @@
     .form-group input[type="submit"]:hover {
         background-color: #0056b3;
     }
+    .h1 {
+    	text-align: center;
+    	justify-content: center;
+    }
 </style>
 </head>
 <body>
 <div class="container">
     <form action="/board/save" method="post">
+     <input type="hidden" name="memberId" value="${sessionScope.member_id}">
         <div class="form-group">
             <label for="title">제목:</label>
-            <input type="text" id="title" name="title">
+            <input type="text" id="title" name="title" required="required">
         </div>
         <div class="form-group">
             <label for="writer">작성자:</label>
-            <input type="text" id="writer" name="writer">
+            <input type="text" id="writer" name="writer" required="required">
         </div>
         <div class="form-group">
             <label for="content">내용:</label>
-            <textarea id="content" name="content" placeholder="내용을 입력하세요"></textarea>
+            <textarea id="content" name="content" placeholder="내용을 입력하세요" required="required"></textarea>
         </div>
         <div class="form-group">
             <input type="submit" value="작성">

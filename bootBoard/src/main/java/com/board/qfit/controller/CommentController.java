@@ -25,7 +25,7 @@ public class CommentController {
 		String username = (String) session.getAttribute("username");
 		comment.setWriter(username);
 		commentService.addComment(comment);
-		return "redirect:/board/detail?boardno=" + comment.getBoardno();
+		return "redirect:/board?boardno=" + comment.getBoardno();
 	}
 	
 }

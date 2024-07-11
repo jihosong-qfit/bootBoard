@@ -46,14 +46,19 @@ public class MemberController {
 //    }
     
     @PostMapping("/login")
-    public String login(@RequestParam String memberId, @RequestParam String password, HttpServletRequest request, Model model) {
+    public String login(@RequestParam String memberId, 
+    					@RequestParam String password,
+    					HttpServletRequest request,
+    					Model model) {
+    	
         MemberDTO member = memberService.findById(memberId);
+        
         if (member != null && member.getPassword().equals(password)) {
             HttpSession session = request.getSession();
             session.setAttribute("memberId", memberId);
             session.setAttribute("username", member.getName()); //댓글 작성자란에 출력할 유저 이름
             session.setAttribute("role", member.getRole()); // 권한 정보를 세션에 저장
-            // 디버그 출력
+            
             System.out.println("로그인 성공: " + memberId + ", 권한: " + member.getRole());
             return "redirect:/board/";
         } else {
@@ -75,7 +80,8 @@ public class MemberController {
                              @RequestParam String name,
                              @RequestParam String nickname,
                              @RequestParam String password,
-                             @RequestParam String confirmPassword) {
+                             @RequestParam String confirmPassword
+) {
     	
     	Map<String, Object> response = new HashMap<String, Object>();
     	

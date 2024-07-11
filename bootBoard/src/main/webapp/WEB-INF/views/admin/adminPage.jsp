@@ -96,7 +96,20 @@
     .form-group input[type="button"]:hover {
         background-color: #0056b3;
     }
+    .btn-red {
+        background-color: #dc3545;
+    }
+    .btn-red:hover {
+        background-color: #c82333;
+    }
 </style>
+<script>
+function deleteUser(memberId) {
+    if (confirm("정말 삭제하시겠습니까?")) {
+        location.href = '/admin/delete?memberId=' + memberId;
+    }
+}
+</script>
 </head>
 <body>
 <div class="container">
@@ -117,6 +130,7 @@
                 <th>아이디</th>
                 <th>이름</th>
                 <th>권한</th>
+                <th>사용자 삭제</th>
             </tr>
         </thead>
         <tbody>
@@ -125,6 +139,7 @@
                     <td>${member.memberId}</td>
                     <td>${member.name}</td>
                     <td>${member.role}</td>
+                    <td><button type="button" class="btn-red" onclick="deleteUser('${member.memberId}')">삭제하기</button></td>
                 </tr>
             </c:forEach>
             <c:if test="${empty memberList}">

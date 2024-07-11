@@ -17,6 +17,7 @@ import com.board.qfit.repository.BoardRepository;
 import com.board.qfit.service.BoardService;
 import com.board.qfit.service.CommentService;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 
@@ -37,7 +38,14 @@ public class BoardController {
 	
 	//게시글 작성 버튼
 	@PostMapping("/save")
-	public String save(@ModelAttribute BoardDTO boardDTO) {
+	public String save(@ModelAttribute BoardDTO boardDTO,
+						HttpSession session) {
+		
+		//게시글 작성 전 로그인 한 사용자의 memberId를 dto객체에 설정
+		String memberId = (String) session.getAttribute("memberId");
+		boardDTO.setMemberId(memberId);
+		System.out.println(boardDTO);
+		
 		int saveResult = boardService.save(boardDTO);
 		if (saveResult > 0) {
 			return "redirect:/board/";
@@ -54,33 +62,67 @@ public class BoardController {
 //		return "board/list";
 //	}
 	
-	//페이징 처리
+	//게시글 목록 페이징 처리
 	@GetMapping("/")
-    public String findAll(@RequestParam(defaultValue = "1") int page,
+    public String findAllPaging(@RequestParam(defaultValue = "1") int page,
                           @RequestParam(defaultValue = "10") int size,
-                          Model model) {
-        List<BoardDTO> boardDTOList = boardService.findAllPaging(page, size);
+                          Model model, HttpSession session
+                    ) {
+		
+		String memberId = (String) session.getAttribute("memberId");
         int totalRecords = boardService.countAll();
         int totalPages = (int) Math.ceil((double) totalRecords / size);
+        List<BoardDTO> boardDTOList = boardService.findAllPaging(page, size);
 
         model.addAttribute("boardList", boardDTOList);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
+        model.addAttribute("memberId", memberId);
         return "board/list";
     }
 	
 	//게시글 상세 + 댓글 조회
 	@GetMapping
-	public String findById(@RequestParam("boardno") Long boardno, Model model) {
+	public String findById(@RequestParam("boardno") Long boardno, 
+							Model model, HttpSession session) {
+		
+		String memberId = (String) session.getAttribute("memberId");
+		String role = (String) session.getAttribute("role");
+		
 		//1. 조회수가 올라가고 나서
 		boardService.updateHits(boardno);
+		
 		//2. 게시물의 정보를 가져온다.
-		BoardDTO boardDTO = boardService.findById(boardno);
-		List<CommentDTO> comments = commentService.showComment(boardno);
-		model.addAttribute("board", boardDTO);
-		model.addAttribute("comments", comments);
-		return "board/detail";
+            BoardDTO boardDTO = boardService.findById(boardno);
+            List<CommentDTO> comments = commentService.showComment(boardno);
+            
+            boolean isWriterOrAdmin = boardService.isBoardWriter(boardno, memberId) || "ROLE_ADMIN".equals(role);
+            
+            model.addAttribute("board", boardDTO);
+    		model.addAttribute("comments", comments);
+    		model.addAttribute("isWriterOrAdmin", isWriterOrAdmin);
+            return "board/detail";
+
 	}
+	
+	//제목, 작성자, 내용 선택하여 검색
+	  @GetMapping("/search")
+	    public String search(@RequestParam(defaultValue = "1") int page,
+	                         @RequestParam(defaultValue = "10") int size,
+	                         @RequestParam String searchType,
+	                         @RequestParam String keyword,
+	                         Model model, HttpSession session) {
+	        String memberId = (String) session.getAttribute("memberId");
+	        List<BoardDTO> boardDTOList = boardService.searchByTitleWriter(page, size, searchType, keyword);
+	        int totalRecords = boardDTOList.size();
+	        int totalPages = (int) Math.ceil((double) totalRecords / size);
+
+	        model.addAttribute("boardList", boardDTOList);
+	        model.addAttribute("currentPage", page);
+	        model.addAttribute("totalPages", totalPages);
+	        model.addAttribute("memberId", memberId);
+	        return "board/list";
+	    }
 	
 	//게시글 삭제
 	@GetMapping("/delete")
@@ -93,7 +135,9 @@ public class BoardController {
 	@GetMapping("/update")
 	public String updateForm(@RequestParam("boardno") Long boardNo, Model model) {
 		BoardDTO boardDTO = boardService.findById(boardNo);
+		List<CommentDTO> comments = commentService.showComment(boardNo);
 		model.addAttribute("board", boardDTO);
+		model.addAttribute("comments", comments);
 		return "/board/update";
 	}
 	
@@ -106,13 +150,7 @@ public class BoardController {
 		return "/board/detail";
 	}
 	
-	//검색 기능
-	@GetMapping("/search")
-    public String search(@RequestParam("title") String title, Model model) {
-        List<BoardDTO> boardDTOList = boardService.searchTitle(title);
-        model.addAttribute("boardList", boardDTOList);
-        return "board/list";
-    }
+
 	
 	
 	

@@ -7,7 +7,7 @@
 <title>Home</title>
 </head>
 <body>
-Hello, SpringBoot!
+<h1>메인 페이지</h1>
 <a href="/board/save">글작성</a>
 <a href="/board/">글목록</a>
 <a href="/member/login">로그인</a>

@@ -4,9 +4,14 @@
 
 <mapper namespace="Board">
 	<insert id="save" parameterType="board"> <!-- => <typeAlias type="com.board.qfit.dto.BoardDTO" alias="board"></typeAlias> -->
-		insert into board(title, writer, content)
-		values(#{title}, #{writer}, #{content})
+		insert into board(title, writer, content, member_id)
+		values(#{title}, #{writer}, #{content}, #{memberId})
 	</insert>
+	<select id="saveMemberId" parameterType="map" resultType="board">
+        SELECT boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') AS createdate, hit, member_id AS memberId
+        FROM board
+        WHERE boardno = #{boardno} AND member_id = #{memberId}
+    </select>
 	<select id="findAll" resultType="board">
 		select boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') as createdate, hit
 		from board 
@@ -31,11 +36,11 @@
 		where boardno=#{boardno}
 	</update>
     <select id="findAllPaging" parameterType="map" resultType="board">
-        SELECT boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') as createdate, hit
+        SELECT boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') as createdate, hit, member_id as memberId
         FROM (
             SELECT a.*, ROWNUM rnum
             FROM (
-                SELECT boardno, title, writer, content, createdate, hit
+                SELECT boardno, title, writer, content, createdate, hit, member_id
                 FROM board
                 ORDER BY boardno DESC
             ) a
@@ -43,14 +48,33 @@
         )
         WHERE rnum &gt; #{offset}
     </select>
+    <select id="isBoardWriter" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM board
+        WHERE boardno = #{boardno} AND member_id = #{memberId}
+    </select>
     <select id="countAll" resultType="int">
         SELECT COUNT(*) 
         FROM board
-    </select>
-        <select id="searchTitle" parameterType="string" resultType="board">
+     </select>
+        <!--<select id="searchTitle" parameterType="string" resultType="board">
         SELECT boardno, title, writer, content, createdate, hit
         FROM board
         WHERE title LIKE '%' || #{title} || '%'
         ORDER BY boardno DESC
+    </select> -->
+     <select id="searchByTitleWriter" parameterType="map" resultType="board">
+        SELECT boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') AS createdate, hit, member_id AS memberId
+        FROM (
+            SELECT a.*, ROWNUM rnum
+            FROM (
+                SELECT boardno, title, writer, content, createdate, hit, member_id
+                FROM board
+                WHERE ${searchType} LIKE '%' || #{keyword} || '%'
+                ORDER BY boardno DESC
+            ) a
+            WHERE ROWNUM &lt;= #{offset} + #{limit}
+        )
+        WHERE rnum > #{offset}
     </select>
 </mapper>        

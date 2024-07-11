@@ -116,6 +116,12 @@
         background-color: #007bff;
         color: white;
     }
+    .selectBox {
+    	text-align: center;
+        margin-bottom: 20px;
+        padding: 10px;
+        font-size: 16px;
+    }
 </style>
 </head>
 <body>
@@ -128,11 +134,16 @@
         </c:if>
     </div>
     <div class="search-box">
-        <form action="/board/search" method="get">
-            <input type="text" name="title" placeholder="검색할 제목을 입력하세요">
-            <input type="submit" value="검색">
-        </form>
-    </div>
+    <form action="/board/search" method="get">
+        <select name="searchType" class="selectBox">
+            <option value="title">제목</option>
+            <option value="writer">작성자</option>
+            <option value="content">내용</option>
+        </select>
+        <input type="text" name="keyword" placeholder="검색할 내용을 입력하세요">
+        <input type="submit" value="검색">
+    </form>
+</div>
     <table>
         <thead>
             <tr>
@@ -147,7 +158,16 @@
             <c:forEach var="board" items="${boardList}">
                 <tr>
                     <td>${board.boardno}</td>
-                    <td><a href="/board?boardno=${board.boardno}">${board.title}</a></td>
+                    <td>
+                     <%-- <c:choose>
+                    <c:when test="${sessionScope.memberId == board.memberId}"> --%>
+                        <a href="/board?boardno=${board.boardno}">${board.title}</a>
+                    <%-- </c:when>
+                    <c:otherwise>
+                        ${board.title}
+                    </c:otherwise>
+                	 </c:choose> --%>
+                    </td>
                     <td>${board.writer}</td>
                     <td>${board.createdate}</td>
                     <td>${board.hit}</td>

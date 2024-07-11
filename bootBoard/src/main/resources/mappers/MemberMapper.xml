@@ -4,7 +4,11 @@
         
 <mapper namespace="Member">
     <select id="findById" parameterType="string" resultType="member">
-        SELECT member_id, name, nickname, password, role
+        SELECT member_id as memberId,
+         name,
+         nickname, 
+         password, 
+         role
         FROM member
         WHERE member_id = #{memberId}
     </select>
@@ -21,4 +25,8 @@
         FROM member
         WHERE name LIKE '%' || #{name} || '%'
     </select>
+    <delete id="deleteMember" parameterType="string">
+        DELETE FROM member
+        WHERE member_id = #{memberId}
+    </delete>
 </mapper>        

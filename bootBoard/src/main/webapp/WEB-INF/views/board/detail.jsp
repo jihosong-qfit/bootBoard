@@ -116,17 +116,6 @@
             location.href = '/board/delete?boardno=' + boardno;
         }
     }
-    
-    document.addEventListener('DOMContentLoaded', (event) => {
-        const contentElement = document.getElementById('board-content');
-        const content = contentElement.innerText;
-
-        if (content.length > 1000) {
-            contentElement.innerText = content.substring(0, 1000) + '...';
-            alert('내용은 1000자 제한입니다');
-        }
-    });
-
 </script>
 </head>
 <body>
@@ -159,8 +148,10 @@
     <!-- 뒤로가기, 수정버튼, 삭제버튼  -->
     <div class="form-group">
         <input type="button" value="목록으로" class="btn-blue" onclick="location.href='/board/'">
-        <input type="button" value="수정하기" class="btn-green" onclick="location.href='/board/update?boardno=${board.boardno}'">
-        <input type="button" value="삭제하기" class="btn-red" onclick="deleteBoard(${board.boardno})">
+        <c:if test="${isWriterOrAdmin}">
+        	<input type="button" value="수정하기" class="btn-green" onclick="location.href='/board/update?boardno=${board.boardno}'">
+        	<input type="button" value="삭제하기" class="btn-red" onclick="deleteBoard(${board.boardno})">
+        </c:if>
     </div>
     
     <!-- 댓글 작성 -->

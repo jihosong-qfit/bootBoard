@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 @Repository
 @RequiredArgsConstructor //초기화되지 않은 final 필드 생성
 public class MemberRepository {
+	
     private final SqlSessionTemplate sql;
 
     public MemberDTO findById(String memberId) {
@@ -27,5 +28,8 @@ public class MemberRepository {
 
 	public List<MemberDTO> searchName(String name) {
 		return sql.selectList("Member.searchName", name);
+	}
+	public void deleteMember(String memberId) {
+		sql.delete("Member.deleteMember", memberId);
 	}
 }
