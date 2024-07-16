@@ -132,6 +132,8 @@
 	    <c:if test="${sessionScope.role == 'ROLE_ADMIN'}">
             <a href="/admin/adminPage">게시판관리</a>
         </c:if>
+        <a href="/chat/chatCreate">채팅방 만들기</a>
+        <a href="/chat/chatList">채팅방 목록</a>
     </div>
     <div class="search-box">
     <form action="/board/search" method="get">

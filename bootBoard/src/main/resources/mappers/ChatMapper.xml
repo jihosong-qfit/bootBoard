@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="Chat">
 
 	<!-- 채팅방 생성 -->
@@ -12,9 +14,83 @@
         SELECT * FROM chat_room
     </select>
 
-	<!-- 채팅방 조회 -->
+	<!-- 채팅방 상세 조회 -->
     <select id="chatRoom" parameterType="long" resultType="chat">
-        SELECT * FROM chat_room 
+        SELECT cr.id, cr.name, cr.password, cr.limit, cr.host, cr.created_at,
+               CASE WHEN cr.host = m.name THEN 1 ELSE 0 END AS isHost
+        FROM chat_room cr
+        	JOIN member m 
+        	ON cr.host = m.member_id
+        WHERE cr.id = #{id}
+    </select>
+    
+    <!-- 채팅메시지 전송 -->
+    <insert id="sendMessage" parameterType="map">
+        INSERT INTO chat_messages (id, chat_room_id, message, sender, created_at)
+        VALUES (chat_message_seq.NEXTVAL, #{chatRoomId}, #{message}, #{sender}, CURRENT_TIMESTAMP)
+    </insert>
+
+	<!-- 귓속말 -->
+    <insert id="sendWhisper" parameterType="map">
+        INSERT INTO chat_messages (chat_room_id, sender, recipient, message, created_at)
+        VALUES (#{chatRoomId}, #{sender}, #{recipient}, #{message}, SYSDATE)
+    </insert>
+
+	<!-- 강퇴 -->
+    <delete id="kickUser" parameterType="map">
+        DELETE FROM chat_room
         WHERE id = #{id}
-    </select> 
+          AND name = #{name}
+    </delete>
+
+	<!-- 채팅메시지 수신 조회 -->
+    <select id="findMessagesByChatRoomId" resultType="chat">
+        SELECT id, chat_room_id, recipient, message, sender, created_at
+        FROM chat_messages
+        WHERE chat_room_id = #{chatRoomId}
+        ORDER BY created_at ASC
+    </select>
+    
+    <!-- 입장 시 접속자 추가 -->
+	<insert id="addUserToRoom" parameterType="map">
+        INSERT INTO chat_user (chat_room_id, member_id)
+        VALUES (#{chatRoomId}, #{memberId})
+    </insert>
+
+	<!-- 나가기 시 접속자 제거 -->
+    <delete id="removeUserFromRoom" parameterType="map">
+        DELETE FROM chat_user
+        WHERE chat_room_id = #{chatRoomId} AND member_id = #{memberId}
+    </delete>
+
+	<!-- 접속자 목록 관리 -->
+    <select id="getUsersInRoom" resultType="member">
+        SELECT m.member_id, m.name, m.nickname, m.role
+        FROM member m
+        	JOIN chat_room cr 
+        		ON cr.id = #{chatRoomId}
+        WHERE m.is_connected = 1
+    </select>
+
+	<!-- 접속자 관리 -->
+    <update id="updateConnectionStatus" parameterType="map">
+        UPDATE member
+        SET is_connected = #{isConnected}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 채팅방 입장 시 접속자수 +1 -->
+    <update id="upConnectedUsers" parameterType="long">
+        UPDATE chat_room
+        SET connected_users = connected_users + 1
+        WHERE id = #{id}
+    </update>
+
+	<!-- 채팅방 나가기 시 접속자수 -1 -->
+    <update id="downConnectedUsers" parameterType="long">
+        UPDATE chat_room
+        SET connected_users = connected_users - 1
+        WHERE id = #{id}
+    </update>
+    
 </mapper>

@@ -8,10 +8,8 @@
 </head>
 <body>
 <h1>메인 페이지</h1>
-<a href="/board/save">글작성</a>
-<a href="/board/">글목록</a>
-<a href="/member/login">로그인</a>
-<a href="/member/join">회원가입</a>
+<a href="/member/login">로그인(-> 게시판목록 -> 채팅방 만들기)</a>
+<a href="/chat/chatList">채팅방 목록</a>
 <a href="/admin/adminPage">관리자페이지</a>
 </body>
 </html>

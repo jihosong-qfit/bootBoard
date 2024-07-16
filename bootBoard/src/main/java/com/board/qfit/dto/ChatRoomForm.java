@@ -7,8 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ChatRoomForm {
-	private String name;
-    private String password;
-    private int limit;
-    private String host;
+	private String name; //채팅방명
+    private String password; //비밀번호
+    private int limit; //인원수제한
+    private String host; //로그인 아이디로 방장 설정
 }
