@@ -3,6 +3,32 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="Chat">
 
+<resultMap id="chatRoomResultMap" type="chat">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="password" column="password"/>
+        <result property="limit" column="limit"/>
+        <result property="host" column="host"/>
+        <result property="createdAt" column="created_at"/>
+        <collection property="members" ofType="member" select="findMembersByChatRoomId" column="id"/>
+    </resultMap>
+
+    <select id="findMembersByChatRoomId" parameterType="long" resultType="member">
+        SELECT DISTINCT
+            m.member_id AS memberId, 
+            m.name, 
+            m.nickname, 
+            m.password, 
+            m.role, 
+            m.is_connected 
+        FROM 
+            member m
+        JOIN 
+            chat_messages cm ON m.member_id = cm.recipient
+        WHERE 
+            cm.chat_room_id = #{chatRoomId}
+    </select>
+
 	<!-- 채팅방 생성 -->
 	<insert id="chatCreate" parameterType="chat">
         INSERT INTO chat_room (name, password, limit, host)
@@ -38,9 +64,9 @@
 
 	<!-- 강퇴 -->
     <delete id="kickUser" parameterType="map">
-        DELETE FROM chat_room
-        WHERE id = #{id}
-          AND name = #{name}
+        DELETE FROM chat_room_members
+        WHERE chat_room_id = #{chatRoomId}
+          AND member_id = (SELECT member_id FROM member WHERE name = #{username})
     </delete>
 
 	<!-- 채팅메시지 수신 조회 -->
@@ -90,6 +116,17 @@
     <update id="downConnectedUsers" parameterType="long">
         UPDATE chat_room
         SET connected_users = connected_users - 1
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 채팅방 정보 변경 -->
+     <update id="updateChatRoom" parameterType="chat">
+        UPDATE chat_room
+        SET name = #{name},
+            password = #{password},
+            limit = #{limit},
+            host = #{host},
+            created_at = #{createdAt}
         WHERE id = #{id}
     </update>
     

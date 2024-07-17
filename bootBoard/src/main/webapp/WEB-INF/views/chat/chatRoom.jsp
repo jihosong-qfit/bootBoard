@@ -36,6 +36,7 @@
         <form id="chatForm">
             <input type="text" id="message" name="message">
             <input type="hidden" id="sender" name="sender" value="${sessionScope.memberId}">
+            <input type="hidden" id="recipient" name="recipient" value="${sessionScope.username}">
             <button type="submit">전송</button>
         </form>
         <button id="exitButton">나가기</button>
@@ -50,7 +51,8 @@
                     
                     <c:if test="${chatRoom.host eq user.memberId}">
                         <c:if test="${not chatRoom.host eq user.memberId}">
-                            <button class="kickButton">강퇴</button>
+                            <button class="kickButton" data-chat-room-id="${chatRoom.id}">강퇴</button>
+
                         </c:if>
                     </c:if>
                 </li>
@@ -63,6 +65,7 @@
     	let isWhisperMode = false; //귓속말모드|일반모드
     	let whisperRecipient = null;
     	
+    	<!-- 채팅방 나가기 -->
     	 document.getElementById('exitButton').addEventListener('click', function() {
              if (confirm('채팅방이 종료됩니다. 나가시겠습니까?')) {
                  $.ajax({
@@ -79,7 +82,8 @@
                  });
              }
          });
-
+    	 
+     	<!-- 브라우저에서 뒤로가기 채팅방 나가기 -->
     	 window.addEventListener('beforeunload', function(event) {
              const payload = JSON.stringify({
                  chatRoomId: ${chatRoom.id},
@@ -103,8 +107,8 @@
             const chatRoomId = ${chatRoom.id};
             console.log("채팅방 ID: " + chatRoomId);  // 콘솔에서 채팅방 ID를 확인
             console.log("송신자: " + sender);  // 콘솔에서 송신자 확인
-            console.log("isWhisperMode: "+isWhisperMode);
-            console.log("whisperRecipient: "+whisperRecipient);
+            console.log("isWhisperMode: " + isWhisperMode);
+            console.log("whisperRecipient: " + whisperRecipient);
 
             if (isWhisperMode && whisperRecipient) {
                 $.ajax({
@@ -122,8 +126,9 @@
                         console.log(response);
                         console.log(response.whisper);
                         if (response.whisper) {
-                            chatContent.innerHTML += '<p class="whisper">' + '[귓] ' + response.sender + " -> " + response.recipient + ': ' + response.message + '</p>';
-                            console.log("귓전송")
+                            if (response.sender === sender || response.recipient === whisperRecipient) {
+                                chatContent.innerHTML += '<p class="whisper">' + '[귓] ' + response.sender + " -> " + response.recipient + ': ' + response.message + '</p>';
+                            }
                         }
                         document.getElementById('message').value = '';
                         isWhisperMode = false; // 귓속말 모드 해제
@@ -148,61 +153,49 @@
                     contentType: 'application/json',
                     success: function(response) {
                         const chatContent = document.getElementById('chatContent');
-                        chatContent.innerHTML += '<p>' + response.sender + ':::::: ' + response.message + '</p>';
-                        console.log("일반전송")
+                        chatContent.innerHTML += '<p>' + response.sender + ':: ' + response.message + '</p>';
                         document.getElementById('message').value = '';
                     },
                     
                 });
             }
         });
-
-       /*  $(document).on('click', '.whisperButton', function() {
-            const username = $(this).parent().data('username');
-            const memberId = $(this).parent().data('memberid');
-            console.log(username);
-            console.log(memberId);
-            const message = prompt('귓속말 메시지를 입력하세요:');
-            if (message) {
-                const recipient = username;
-                $.ajax({
-                    url: '${pageContext.request.contextPath}/chat/sendWhisper',
-                    type: 'POST',
-                    data: JSON.stringify({
-                        recipient: recipient,
-                        message: message,
-                        chatRoomId: ${chatRoom.id},
-                        sender: sender
-                    }),
-                    contentType: 'application/json',
-                    success: function(response) {
-                        const chatContent = document.getElementById('chatContent');
-                        if (response.recipient === sender || response.sender === sender) {
-                            chatContent.innerHTML += '<p class="whisper">' + '[귓] ' + response.sender + " -> " + response.recipient + ': ' + response.message + '</p>';
-                        }
-                        document.getElementById('message').value = '';
-                    }
-                });
-            }
-        }); */
         
         <!-- 강퇴 -->
-        document.querySelectorAll('.kickButton').forEach(button => {
-            button.addEventListener('click', function() {
-                const username = this.parentElement.getAttribute('data-username');
-                // AJAX를 사용하여 유저 강퇴
-                $.ajax({
-                    url: '${pageContext.request.contextPath}/chat/kickUser',
-                    type: 'POST',
-                    data: {
-                        username: name,
-                        chatRoomId: '${chatRoom.id}'
-                    },
-                    success: function(response) {
-                        alert(response);
-                        location.reload();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('userList').addEventListener('click', function(event) {
+                if (event.target.classList.contains('kickButton')) {
+                    const liElement = event.target.closest('li');
+                    const username = liElement.getAttribute('data-username');
+                    const chatRoomId = '${chatRoom.id}';
+                    console.log("강퇴할 유저:", username);
+                    console.log("채팅방 ID:", chatRoomId);
+
+                    if (!username || !chatRoomId) {
+                        console.error('Username or ChatRoomId is null');
+                        alert('강퇴할 유저 정보가 잘못되었습니다.');
+                        return;
                     }
-                });
+                    
+                    $.ajax({
+                        url: '${pageContext.request.contextPath}/chat/kickUser',
+                        type: 'POST',
+                        data: JSON.stringify({
+                            username: username,
+                            chatRoomId: chatRoomId
+                        }),
+                        contentType: 'application/json',
+                        success: function(response) {
+                            console.log("강퇴 성공:", response);
+                            alert(response);
+                            liElement.remove();
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("강퇴 실패:", xhr.responseText);
+                            alert("강퇴 실패: " + xhr.responseText);
+                        }
+                    });
+                }
             });
         });
 
@@ -216,14 +209,16 @@
                 },
                 success: function(response) {
                     const chatContent = document.getElementById('chatContent');
+                    const currentSender = $('#sender').val();
+                    const currentRecipient = $('#recipient').val();
                     chatContent.innerHTML = ''; // 기존 메시지를 지우지 않음
                     response.forEach(function(message) {
                         if (message.whisper) {
-                            chatContent.innerHTML += '<p class="whisper">' + '[귓] ' + message.sender + " -> " + message.recipient + ': ' + message.message + '</p>';
-                            console.log("귓갱신")
+                            if (message.sender === currentSender || message.recipient === currentRecipient) {
+                                chatContent.innerHTML += '<p class="whisper">' + '[귓] ' + message.sender + " -> " + message.recipient + ': ' + message.message + '</p>';
+                            }
                         } else {
                             chatContent.innerHTML += '<p>' + message.sender + ': ' + message.message + '</p>';
-                            console.log("일반갱신")
                         }
                     });
                 }
@@ -258,24 +253,8 @@
 
         setInterval(getMessages, 1000);
         setInterval(getUsers, 1000);
-        
+        getUsers();
 
-        $(document).on('click', '.kickButton', function() {
-            const username = $(this).parent().data('username');
-            $.ajax({
-                url: '${pageContext.request.contextPath}/chat/kickUser',
-                type: 'POST',
-                data: JSON.stringify({
-                    username: username,
-                    chatRoomId: ${chatRoom.id}
-                }),
-                contentType: 'application/json',
-                success: function(response) {
-                    alert(response);
-                    location.reload();
-                }
-            });
-        });
     </script>
 </body>
 </html>

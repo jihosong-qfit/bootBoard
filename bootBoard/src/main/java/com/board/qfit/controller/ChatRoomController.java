@@ -3,6 +3,8 @@ package com.board.qfit.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -74,6 +76,7 @@ public class ChatRoomController {
 	    @GetMapping("/chatRoom/{id}")
 	    public String getChatRoom(@PathVariable Long id, Model model, HttpSession session) {
 	    	String memberId = (String) session.getAttribute("memberId");
+	    	String username = (String) session.getAttribute("username");
 	    	//1. 접속자수 관리
 	    	chatRoomService.updateConnectionStatus(id, memberId, true);
 	    	//2. 채팅방 입장 시 상세 정보
@@ -82,7 +85,7 @@ public class ChatRoomController {
 	        return "chat/chatRoom";
 	    }
 	    
-	    //나가기 시 접속자 제거
+	    //채팅방 상세 화면에서 나가기 시 접속자 제거
 	    @PostMapping("/removeUser")
 	    @ResponseBody
 	    public void removeUser(@RequestBody Map<String, Object> payload) {
@@ -107,7 +110,7 @@ public class ChatRoomController {
 	    	Long chatRoomId = Long.valueOf(payload.get("chatRoomId").toString());
 	    	String sender = (String) payload.get("sender");
 	    	chatRoomService.sendMessage(chatRoomId, message, sender);
-	        return new ChatRoomDTO(chatRoomId, message, sender, false);
+	        return new ChatRoomDTO(chatRoomId, message, sender, null, false);
 	    }
 
 	    //귓속말버튼
@@ -127,25 +130,41 @@ public class ChatRoomController {
 	        MemberDTO recipientMember = new MemberDTO();
 	        recipientMember.setName(recipient); // 받는 사람: 유저명
 	        
-	        chatRoomService.sendWhisper(chatRoomId, sender, message, recipient);
-	        return new ChatRoomDTO(chatRoomId, senderMember.getMemberId(), message, recipientMember.getName(), true);
+	        chatRoomService.sendWhisper(chatRoomId, sender, recipient, message);
+	        ChatRoomDTO response = new ChatRoomDTO(chatRoomId, senderMember.getMemberId(), recipientMember.getName(), message, true);
+	        return response;
 	    }
 
 	    //강퇴버튼
 	    //채팅방 id, 유저이름을 받아옴
+//	    @PostMapping("/kickUser")
+//	    @ResponseBody
+//	    public String kickUser(@RequestParam String username, @RequestParam Long chatRoomId) {
+//	    	chatRoomService.kickUser(chatRoomId, username);
+//	        return username + "님을 강퇴했습니다.";
+//	    }
 	    @PostMapping("/kickUser")
 	    @ResponseBody
-	    public String kickUser(@RequestParam String username, @RequestParam Long chatRoomId) {
-	    	chatRoomService.kickUser(chatRoomId, username);
-	        return username + "님을 강퇴했습니다.";
-	    }
+	    public ResponseEntity<String> kickUser(@RequestBody Map<String, String> payload) {
+	        String chatRoomId = payload.get("chatRoomId");
+	        String username = payload.get("username");
+	        
+	        if (chatRoomId == null || username == null) {
+	            return ResponseEntity.badRequest().body("유효하지 않은 요청입니다.");
+	        }
 
+	        boolean success = chatRoomService.kickUser(chatRoomId, username);
+	        if (success) {
+	            return ResponseEntity.ok("유저가 강퇴되었습니다.");
+	        } else {
+	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("강퇴 실패");
+	        }
+	    }
+	    
 	    //채팅내용 갱신
 		@GetMapping("/getMessages") 
 		@ResponseBody 
 		public List<ChatRoomDTO> getMessages(@RequestParam Long chatRoomId) { 
 			return chatRoomService.getMessages(chatRoomId);
 		}
-		 
-	
 }

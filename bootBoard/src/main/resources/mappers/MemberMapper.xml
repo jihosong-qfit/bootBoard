@@ -3,6 +3,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
         
 <mapper namespace="Member">
+    <!-- 회원 정보 조회 -->
     <select id="findById" parameterType="string" resultType="member">
         SELECT member_id as memberId,
          name,
@@ -12,21 +13,29 @@
         FROM member
         WHERE member_id = #{memberId}
     </select>
+    <!-- 회원가입 -->
     <insert id="memberSave" parameterType="member">
         INSERT INTO member (member_id, name, nickname, password)
         VALUES (#{memberId}, #{name}, #{nickname}, #{password})
     </insert>
+    <!-- 회원 모든 정보 조회 -->
     <select id="findAll" resultType="member">
         SELECT member_id as memberId, name, role
         FROM member
     </select>
+    <!-- 회원 이름 검색 -->
     <select id="searchName" parameterType="string" resultType="member">
         SELECT member_id AS memberId, name, role
         FROM member
         WHERE name LIKE '%' || #{name} || '%'
     </select>
+    <!-- 회원 정보 삭제 -->
     <delete id="deleteMember" parameterType="string">
         DELETE FROM member
         WHERE member_id = #{memberId}
     </delete>
+    <!-- 회원 이름으로 조회 -->
+    <select id="findByUsername" parameterType="string" resultType="member">
+        SELECT * FROM member WHERE name = #{username}
+    </select>
 </mapper>        

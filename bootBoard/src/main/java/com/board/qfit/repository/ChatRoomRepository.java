@@ -28,9 +28,22 @@ public class ChatRoomRepository {
 	}
 	
 	//채팅방 상세 조회
+//	public ChatRoomDTO chatRoom(Long id) {
+//		return sql.selectOne("Chat.chatRoom", id);
+//	}
 	public ChatRoomDTO chatRoom(Long id) {
-		return sql.selectOne("Chat.chatRoom", id);
-	}
+        ChatRoomDTO chatRoom = sql.selectOne("Chat.chatRoom", id);
+        if (chatRoom != null) {
+            List<MemberDTO> members = sql.selectList("Chat.findMembersByChatRoomId", id);
+            chatRoom.setMembers(members);
+        }
+        return chatRoom;
+    }
+	
+	// 채팅방에 속한 멤버 목록 조회
+    public List<MemberDTO> findMembersByChatRoomId(Long chatRoomId) {
+        return sql.selectList("Chat.findMembersByChatRoomId", chatRoomId);
+    }
 	
 	//채팅방 입장 접속자수 +1
 	public int upConnectedUsers(Long id) {
@@ -83,5 +96,12 @@ public class ChatRoomRepository {
 	public List<ChatRoomDTO> findMessagesByChatRoomId(Long chatRoomId) {
 		return sql.selectList("Chat.findMessagesByChatRoomId", chatRoomId);
 	}
+
+	//채팅방 정보 상태 변경
+	public void updateChatRoom(ChatRoomDTO chatRoom) {
+        sql.update("Chat.updateChatRoom", chatRoom);
+	}
+	
+	
 
 }

@@ -13,4 +13,5 @@ public class MemberDTO {
     private String nickname;
     private String password;
     private String role;
+    private int isConnected; //접속여부
 }

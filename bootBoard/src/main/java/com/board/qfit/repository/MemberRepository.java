@@ -29,7 +29,15 @@ public class MemberRepository {
 	public List<MemberDTO> searchName(String name) {
 		return sql.selectList("Member.searchName", name);
 	}
+	
 	public void deleteMember(String memberId) {
 		sql.delete("Member.deleteMember", memberId);
+	}
+	
+	public void updateMember(MemberDTO member) {
+		sql.update("Member.updateMember" ,member);
+	}
+	public MemberDTO findByUsername(String username) {
+		return sql.selectOne("Member.findByUsername", username);
 	}
 }
