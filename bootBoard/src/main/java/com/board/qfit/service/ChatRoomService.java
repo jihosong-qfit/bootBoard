@@ -66,23 +66,17 @@ public class ChatRoomService {
 		return chatRoom;
 	}
 	
-	//채팅방 입장 접속자수 +1
-	@Transactional
-	public void upConnectedUsers(Long id) {
-		 int result = chatRoomRepository.upConnectedUsers(id);
-	        if (result == 0) {
-	            throw new IllegalStateException("접속유저수 변경 실패");
-	        }
-	}
-		
-	@Transactional
-	//채팅방 나가기 접속자수 -1
-	public void downConnectedUsers(Long id) {
-		int result = chatRoomRepository.downConnectedUsers(id);
-        if (result == 0) {
-            throw new IllegalStateException("접속유저수 변경 실패");
-        }
-	}
+	public void enterRoom(Long chatRoomId) {
+        chatRoomRepository.incrementConnectedUsers(chatRoomId);
+    }
+
+    public void leaveRoom(Long chatRoomId) {
+        chatRoomRepository.decrementConnectedUsers(chatRoomId);
+    }
+
+    public int getConnectedUsers(Long chatRoomId) {
+        return chatRoomRepository.getConnectedUsers(chatRoomId);
+    }
 	
 	//채팅내용 전송
 	public void sendMessage(Long chatRoomId, String message, String sender) {
@@ -124,6 +118,5 @@ public class ChatRoomService {
         }
         return false;
 	}
-
 	
 }

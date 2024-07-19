@@ -45,10 +45,12 @@ public class MemberService {
         return memberRepository.searchName(name);
     }
 	
+	//회원 id 확인
 	public boolean isMemberIdExist(String memberId) {
         return memberRepository.findById(memberId) != null;
     }
 
+	//회원 삭제 => adminController
 	public void deleteMember(String memberId) {
 		memberRepository.deleteMember(memberId);
 	}

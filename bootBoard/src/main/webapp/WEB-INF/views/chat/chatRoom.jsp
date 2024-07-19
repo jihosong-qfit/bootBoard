@@ -38,9 +38,6 @@
             <input type="hidden" id="sender" name="sender" value="${sessionScope.memberId}">
             <input type="hidden" id="recipient" name="recipient" value="${sessionScope.username}">
             <input type="hidden" id="chatRoomId" name="chatRoomId" value="${chatRoom.id}">
-            <%-- <c:forEach var="chatUser" items="${chatUsers}">
-        		<input type="hidden" id="userId_${chatUser.userId}" name="userId" value="${chatUser.userId}">
-    		</c:forEach> --%>
             <button type="submit">전송</button>
         </form>
         <button id="exitButton">나가기</button>
@@ -105,13 +102,15 @@
         <!-- 채팅메시지 전송 -->
         document.getElementById('chatForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            const message = document.getElementById('message').value;
+            const message = document.getElementById('message').value.trim();
             const chatRoomId = ${chatRoom.id};
-            console.log("채팅방 ID: " + chatRoomId);  // 콘솔에서 채팅방 ID를 확인
-            console.log("송신자: " + sender);  // 콘솔에서 송신자 확인
-            console.log("isWhisperMode: " + isWhisperMode);
-            console.log("whisperRecipient: " + whisperRecipient);
-
+            const sender = document.getElementById('sender').value.trim();
+            
+            if (!message) {
+                alert('메시지를 입력하세요.');
+                return;
+            }         
+            
             if (isWhisperMode && whisperRecipient) {
                 $.ajax({
                     url: '${pageContext.request.contextPath}/chat/sendWhisper',
@@ -125,8 +124,6 @@
                     contentType: 'application/json',
                     success: function(response) {
                         const chatContent = document.getElementById('chatContent');
-                        console.log(response);
-                        console.log(response.whisper);
                         if (response.whisper) {
                             if (response.sender === sender || response.recipient === whisperRecipient) {
                                 chatContent.innerHTML += '<p class="whisper">' + '[귓] ' + response.sender + " -> " + response.recipient + ': ' + response.message + '</p>';
@@ -163,10 +160,9 @@
             }
         });
         
-        <!-- 강퇴 -->
+        <!-- 강퇴버튼 -->
         $(document).on('click', '.kick-button', function() {
         	const userId = $(this).closest('li').data('user-id');
-            console.log(userId);
          	// userId가 유효한지 확인
             if (!userId) {
                 alert('유효하지 않은 사용자 ID입니다.');
@@ -176,7 +172,6 @@
             $.ajax({
                 type: 'POST',
                 url: '/chat/kickUser',
-                //contentType: 'application/json',
                 contentType: 'application/x-www-form-urlencoded',
                 data: {
                 	userId: userId
@@ -251,8 +246,8 @@
             });
         }
 
-        	setInterval(getUsers, 1000);
-        	setInterval(getMessages, 1000);
+        	setInterval(getUsers, 500);
+        	setInterval(getMessages, 500);
         
     </script>
 </body>

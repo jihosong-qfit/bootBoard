@@ -93,17 +93,23 @@
         ORDER BY created_at ASC
     </select>
     
-    <!-- 입장 시 접속자 추가 -->
-	<insert id="addUserToRoom" parameterType="map">
-        INSERT INTO chat_user (chat_room_id, member_id)
-        VALUES (#{chatRoomId}, #{memberId})
-    </insert>
-
-	<!-- 나가기 시 접속자 제거 -->
-    <delete id="removeUserFromRoom" parameterType="map">
-        DELETE FROM chat_user
-        WHERE chat_room_id = #{chatRoomId} AND member_id = #{memberId}
-    </delete>
+	<update id="incrementConnectedUsers" parameterType="long">
+	    UPDATE chat_room
+	    SET connected_users = connected_users + 1
+	    WHERE id = #{chatRoomId}
+	</update>
+	
+	<update id="decrementConnectedUsers" parameterType="long">
+	    UPDATE chat_room
+	    SET connected_users = connected_users - 1
+	    WHERE id = #{chatRoomId}
+	</update>
+	
+	<select id="getConnectedUsers" resultType="int">
+	    SELECT connected_users
+	    FROM chat_room
+	    WHERE id = #{chatRoomId}
+	</select>
 
 	<!-- 접속자 목록 관리 -->
     <!-- <select id="getUsersInRoom" resultType="member">
@@ -135,20 +141,6 @@
         SET is_connected = #{isConnected}
         WHERE member_id = #{memberId}
     </update>
-
-    <!-- 채팅방 입장 시 접속자수 +1 -->
-    <update id="upConnectedUsers" parameterType="long">
-        UPDATE chat_room
-        SET connected_users = connected_users + 1
-        WHERE id = #{id}
-    </update>
-
-	<!-- 채팅방 나가기 시 접속자수 -1 -->
-    <update id="downConnectedUsers" parameterType="long">
-        UPDATE chat_room
-        SET connected_users = connected_users - 1
-        WHERE id = #{id}
-    </update>
     
     <!-- 채팅방 정보 변경 -->
      <update id="updateChatRoom" parameterType="chat">
@@ -161,7 +153,7 @@
         WHERE id = #{id}
     </update>
     
-    <!-- 강퇴 테스트1 -->
+    <!-- 강퇴 -->
     <delete id="kickUser" parameterType="string">
         DELETE FROM chat_user
         WHERE user_id = #{userId}

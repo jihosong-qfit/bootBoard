@@ -46,15 +46,17 @@ public class ChatRoomRepository {
         return sql.selectList("Chat.findMembersByChatRoomId", chatRoomId);
     }
 	
-	//채팅방 입장 접속자수 +1
-	public int upConnectedUsers(Long id) {
-		return sql.update("Chat.upConnectedUsers", id);
-	}
-	
-	//채팅방 나가기 접속자수 -1
-	public int downConnectedUsers(Long id) {
-		return sql.update("Chat.downConnectedUsers", id);
-	}
+    public void incrementConnectedUsers(Long chatRoomId) {
+        sql.update("Chat.incrementConnectedUsers", chatRoomId);
+    }
+
+    public void decrementConnectedUsers(Long chatRoomId) {
+        sql.update("Chat.decrementConnectedUsers", chatRoomId);
+    }
+
+    public int getConnectedUsers(Long chatRoomId) {
+        return sql.selectOne("Chat.getConnectedUsers", chatRoomId);
+    }
 
 	//접속자 목록 관리
 	public List<MemberDTO> getUsersInRoom(Long chatRoomId) {
