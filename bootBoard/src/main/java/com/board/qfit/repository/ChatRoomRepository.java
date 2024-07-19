@@ -7,6 +7,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.board.qfit.dto.ChatRoomDTO;
+import com.board.qfit.dto.ChatUser;
 import com.board.qfit.dto.MemberDTO;
 
 import lombok.RequiredArgsConstructor;
@@ -55,16 +56,6 @@ public class ChatRoomRepository {
 		return sql.update("Chat.downConnectedUsers", id);
 	}
 
-//	//입장 시 접속자 추가
-//	public void addUserToRoom(Long chatRoomId, String memberId) {
-//		return sql.insert("Chat.addUserToRoom")
-//	}
-//
-//	//나가기 시 접속자 제거
-//	public void removeUserFromRoom(Long chatRoomId, String memberId) {
-//		chatRepository.removeUserFromRoom(chatRoomId, memberId);
-//	}
-
 	//접속자 목록 관리
 	public List<MemberDTO> getUsersInRoom(Long chatRoomId) {
 		return sql.selectList("Chat.getUsersInRoom", chatRoomId);
@@ -75,7 +66,6 @@ public class ChatRoomRepository {
         Map<String, Object> params = Map.of("memberId", memberId, "isConnected", isConnected ? 1 : 0);
         sql.update("Chat.updateConnectionStatus", params);
     }
-
 
 	//채팅내용 전송
 	public void sendMessage(Long chatRoomId, String message, String sender) {
@@ -88,10 +78,19 @@ public class ChatRoomRepository {
 	}
 
 	//강퇴
-	public void kickUser(Long chatRoomId, String username) {
-		sql.delete("Chat.kickUser", Map.of("chatRoomId", chatRoomId, "username", username));
+	public void kickUser(String userId) {
+		sql.delete("Chat.kickUser", userId);
 	}
 
+	//채팅방에 멤버 정보 추가, DB에 중복 추가 불가
+	public void addUserToChatRoom(String userId, String username) {
+        int userExists = sql.selectOne("Chat.checkUserExists", userId);
+        if (userExists == 0) {
+            sql.insert("Chat.addUserToChatRoom", 
+                Map.of("userId", userId, "username", username));
+        }
+    }
+	
 	//채팅내용 수신
 	public List<ChatRoomDTO> findMessagesByChatRoomId(Long chatRoomId) {
 		return sql.selectList("Chat.findMessagesByChatRoomId", chatRoomId);
@@ -102,6 +101,9 @@ public class ChatRoomRepository {
         sql.update("Chat.updateChatRoom", chatRoom);
 	}
 	
-	
+	//채팅방 유저 정보 가져오기
+	public List<ChatUser> getChatUser() {
+		return sql.selectList("Chat.getChatUser");
+	}
 
 }

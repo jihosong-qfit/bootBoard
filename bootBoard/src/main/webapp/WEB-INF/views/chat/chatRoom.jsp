@@ -37,31 +37,33 @@
             <input type="text" id="message" name="message">
             <input type="hidden" id="sender" name="sender" value="${sessionScope.memberId}">
             <input type="hidden" id="recipient" name="recipient" value="${sessionScope.username}">
+            <input type="hidden" id="chatRoomId" name="chatRoomId" value="${chatRoom.id}">
+            <%-- <c:forEach var="chatUser" items="${chatUsers}">
+        		<input type="hidden" id="userId_${chatUser.userId}" name="userId" value="${chatUser.userId}">
+    		</c:forEach> --%>
             <button type="submit">전송</button>
         </form>
         <button id="exitButton">나가기</button>
         <h3>접속자 목록</h3>
         <ul id="userList">
-            <c:forEach var="user" items="${chatRoom.members}">
-                <li data-username="${user.name}" data-memberid="${user.memberId}">
-                    ${user.name}
-                    <c:if test="${chatRoom.host eq user.memberId}">(방장)</c:if>
-                    
-                    <button class="whisperButton">귓속말</button>
-                    
-                    <c:if test="${chatRoom.host eq user.memberId}">
-                        <c:if test="${not chatRoom.host eq user.memberId}">
-                            <button class="kickButton" data-chat-room-id="${chatRoom.id}">강퇴</button>
-
-                        </c:if>
-                    </c:if>
-                </li>
-            </c:forEach>
+            <%-- <c:forEach var="user" items="${chatRoom.members}">
+        		<li data-user-id="${user.userId}">
+		            ${user.name} <c:if test="${chatRoom.host eq user.userId}">(방장)</c:if>
+		            <button class="whisperButton">귓속말</button>
+            		<c:if test="${chatRoom.host eq sessionScope.memberId}">
+		                <c:if test="${chatRoom.host ne user.userId}">
+		                    <button class="kick-button" data-user-id="${user.userId}">강퇴</button>
+		                </c:if>
+            		</c:if>
+       			 </li>
+    		</c:forEach> --%>
         </ul>
     </div>
     <script>
     	const sender = $('#sender').val();
-    	const chatRoomHost = '${chatRoom.host}';
+    	var chatRoomHost = "${chatRoom.host}";
+    	const chatRoomId = '${chatRoom.id}';
+    	var userId = "${chatUsers.userId}";
     	let isWhisperMode = false; //귓속말모드|일반모드
     	let whisperRecipient = null;
     	
@@ -153,7 +155,7 @@
                     contentType: 'application/json',
                     success: function(response) {
                         const chatContent = document.getElementById('chatContent');
-                        chatContent.innerHTML += '<p>' + response.sender + ':: ' + response.message + '</p>';
+                        chatContent.innerHTML += '<p>' + response.sender + ': ' + response.message + '</p>';
                         document.getElementById('message').value = '';
                     },
                     
@@ -162,42 +164,38 @@
         });
         
         <!-- 강퇴 -->
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('userList').addEventListener('click', function(event) {
-                if (event.target.classList.contains('kickButton')) {
-                    const liElement = event.target.closest('li');
-                    const username = liElement.getAttribute('data-username');
-                    const chatRoomId = '${chatRoom.id}';
-                    console.log("강퇴할 유저:", username);
-                    console.log("채팅방 ID:", chatRoomId);
-
-                    if (!username || !chatRoomId) {
-                        console.error('Username or ChatRoomId is null');
-                        alert('강퇴할 유저 정보가 잘못되었습니다.');
-                        return;
+        $(document).on('click', '.kick-button', function() {
+        	const userId = $(this).closest('li').data('user-id');
+            console.log(userId);
+         	// userId가 유효한지 확인
+            if (!userId) {
+                alert('유효하지 않은 사용자 ID입니다.');
+                return;
+            }
+         	
+            $.ajax({
+                type: 'POST',
+                url: '/chat/kickUser',
+                //contentType: 'application/json',
+                contentType: 'application/x-www-form-urlencoded',
+                data: {
+                	userId: userId
+                },
+                success: function(response) {
+                	
+                    if (response === 'success') {
+                        $('li[data-user-id="' + userId + '"]').remove();
+                        alert(userId + "가 강제퇴장 되었습니다.")
+                    } else {
+                        alert('강퇴 실패!!');
                     }
-                    
-                    $.ajax({
-                        url: '${pageContext.request.contextPath}/chat/kickUser',
-                        type: 'POST',
-                        data: JSON.stringify({
-                            username: username,
-                            chatRoomId: chatRoomId
-                        }),
-                        contentType: 'application/json',
-                        success: function(response) {
-                            console.log("강퇴 성공:", response);
-                            alert(response);
-                            liElement.remove();
-                        },
-                        error: function(xhr, status, error) {
-                            console.error("강퇴 실패:", xhr.responseText);
-                            alert("강퇴 실패: " + xhr.responseText);
-                        }
-                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', status, error);
                 }
             });
         });
+
 
         <!-- 실시간 메시지 갱신 -->
         function getMessages() {
@@ -230,18 +228,20 @@
             $.ajax({
                 url: '${pageContext.request.contextPath}/chat/getUsersInRoom',
                 type: 'GET',
-                data: { chatRoomId: ${chatRoom.id} },
+                data: { chatRoomId: chatRoomId },
                 success: function(users) {
+                	console.log("반환 데이터 구조: ", users);
                     const userList = document.getElementById('userList');
                     userList.innerHTML = '';
                     users.forEach(function(user) {
-                    	const isHost = user.memberId === chatRoomHost;
+                    	console.log("User ID: " + user.userId, "Member ID: " + user.memberId, "Name: " + user.name);
+                        const isHost = user.memberId === chatRoomHost;
                         const isCurrentUserHost = sender === chatRoomHost;
-                        userList.innerHTML += '<li data-username="' + user.name + '">' + user.name +
-                                              (isHost ? ' (방장)' : '') +
-                                              '<button class="whisperButton">귓속말</button>' +
-                                              (isCurrentUserHost && !isHost ? '<button class="kickButton">강퇴</button>' : '') +
-                                              '</li>';
+                        userList.innerHTML += '<li data-user-id="' + user.userId + '" data-username="' + user.name + '">' +
+                            user.name + (isHost ? ' (방장)' : '') +
+                            '<button class="whisperButton">귓속말</button>' +
+                            (isCurrentUserHost && !isHost ? '<button class="kick-button" data-user-id="' + user.userId + '">강퇴</button>' : '') +
+                        '</li>';
                     });
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
@@ -251,10 +251,9 @@
             });
         }
 
-        setInterval(getMessages, 1000);
-        setInterval(getUsers, 1000);
-        getUsers();
-
+        	setInterval(getUsers, 1000);
+        	setInterval(getMessages, 1000);
+        
     </script>
 </body>
 </html>

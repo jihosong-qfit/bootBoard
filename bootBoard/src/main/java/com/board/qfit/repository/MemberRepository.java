@@ -37,7 +37,7 @@ public class MemberRepository {
 	public void updateMember(MemberDTO member) {
 		sql.update("Member.updateMember" ,member);
 	}
-	public MemberDTO findByUsername(String username) {
-		return sql.selectOne("Member.findByUsername", username);
+	public MemberDTO findByUsername(String memberId) {
+		return sql.selectOne("Member.findByUsername", memberId);
 	}
 }

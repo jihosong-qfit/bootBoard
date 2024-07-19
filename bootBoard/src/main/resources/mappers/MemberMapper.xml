@@ -36,6 +36,6 @@
     </delete>
     <!-- 회원 이름으로 조회 -->
     <select id="findByUsername" parameterType="string" resultType="member">
-        SELECT * FROM member WHERE name = #{username}
+        SELECT * FROM member WHERE member_id = #{memberId}
     </select>
 </mapper>        

@@ -1,5 +1,7 @@
 package com.board.qfit.controller;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.board.qfit.dto.ChatRoomDTO;
 import com.board.qfit.dto.ChatRoomForm;
+import com.board.qfit.dto.ChatUser;
 import com.board.qfit.dto.MemberDTO;
 import com.board.qfit.service.ChatRoomService;
 
@@ -59,6 +62,7 @@ public class ChatRoomController {
 	 		}
 	    	
 	    	chatRoomForm.setHost(memberId); //session에서 가져온 로그인한 사용자 아이디값을 방장으로 설정
+	    	System.out.println("Creating chat room with host: " + memberId);
 	        chatRoomService.chatCreate(chatRoomForm);
 	        return "redirect:/chat/chatList";
 	    }
@@ -79,9 +83,20 @@ public class ChatRoomController {
 	    	String username = (String) session.getAttribute("username");
 	    	//1. 접속자수 관리
 	    	chatRoomService.updateConnectionStatus(id, memberId, true);
-	    	//2. 채팅방 입장 시 상세 정보
+	    	//2. 채팅방 입장 시 유저 정보를 DB에 저장
+	    	chatRoomService.addUserToChatRoom(memberId, username);
+//	    	List<ChatUser> chatUsers = chatRoomService.getChatUser();
+//	    	for (int i=0; i<chatUsers.size(); i++) {
+//	    		System.out.println(chatUsers.get(i).getUserId());
+//	    	}
+	    	//3. 채팅방 입장 시 상세 정보
 	        ChatRoomDTO chatRoom = chatRoomService.chatRoom(id);
+	        //4. 채팅방 접속자 목록 가져오기
+	        List<MemberDTO> members = chatRoomService.getUsersInRoom(id);
+	        //5. 채팅방 정보와 멤버 목록, 채팅방 유저 정보 model에 추가
 	        model.addAttribute("chatRoom", chatRoom);
+	        model.addAttribute("members", members);
+//	        model.addAttribute("chatUsers", chatUsers);
 	        return "chat/chatRoom";
 	    }
 	    
@@ -98,7 +113,9 @@ public class ChatRoomController {
 	    @GetMapping("/getUsersInRoom")
 	    @ResponseBody
 	    public List<MemberDTO> getUsersInRoom(@RequestParam Long chatRoomId) {
-	        return chatRoomService.getUsersInRoom(chatRoomId);
+	    	List<MemberDTO> members = chatRoomService.getUsersInRoom(chatRoomId);
+	    	System.out.println("Members: " + members);
+	    	return members;
 	    }
 	    
 	    //채팅내용 전송
@@ -137,28 +154,22 @@ public class ChatRoomController {
 
 	    //강퇴버튼
 	    //채팅방 id, 유저이름을 받아옴
-//	    @PostMapping("/kickUser")
-//	    @ResponseBody
-//	    public String kickUser(@RequestParam String username, @RequestParam Long chatRoomId) {
-//	    	chatRoomService.kickUser(chatRoomId, username);
-//	        return username + "님을 강퇴했습니다.";
-//	    }
+	    //map을 파라미터로 넘겼을 때 map 안의 파라미터가 null인경우 혹은 넘어가는 데이터 타입이 다른 경우 오류이다!
 	    @PostMapping("/kickUser")
 	    @ResponseBody
-	    public ResponseEntity<String> kickUser(@RequestBody Map<String, String> payload) {
-	        String chatRoomId = payload.get("chatRoomId");
-	        String username = payload.get("username");
+	    public String kickUser(@RequestParam("userId") String userId) {
+	    	
+	        if (userId == null || userId.isEmpty()) {
+	            return "에러: userId is null or empty";
+	        }
 	        
-	        if (chatRoomId == null || username == null) {
-	            return ResponseEntity.badRequest().body("유효하지 않은 요청입니다.");
+	        try {
+	            chatRoomService.kickUser(userId);    
+	        } catch (Exception e) {
+	            return "에러: " + e.getMessage();
 	        }
-
-	        boolean success = chatRoomService.kickUser(chatRoomId, username);
-	        if (success) {
-	            return ResponseEntity.ok("유저가 강퇴되었습니다.");
-	        } else {
-	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("강퇴 실패");
-	        }
+	        
+	        return "success";
 	    }
 	    
 	    //채팅내용 갱신
@@ -167,4 +178,32 @@ public class ChatRoomController {
 		public List<ChatRoomDTO> getMessages(@RequestParam Long chatRoomId) { 
 			return chatRoomService.getMessages(chatRoomId);
 		}
+		
+		//채팅방 입장시 비밀번호 유효성 검증
+		@PostMapping("/validatePassword")
+	    @ResponseBody
+	    public ResponseEntity<Map<String, Boolean>> validatePassword
+	    						(@RequestBody Map<String, Object> payload) {
+			
+			//채팅방 목록 화면에서 roomId와 password를 요청받는다.
+			Object roomIdObj = payload.get("roomId"); //roomId를 object로 받는다.
+	        Long roomId;
+	        if (roomIdObj instanceof Integer) {
+	            roomId = ((Integer) roomIdObj).longValue(); //object로 받은 roomId를 Integer형과 비교해서 long value로 받는다.
+	        } else if (roomIdObj instanceof String) {
+	            roomId = Long.valueOf((String) roomIdObj);
+	        } else {
+	            return ResponseEntity.badRequest().build(); // roomId가 예상한 타입이 아닌 경우에 대한 처리
+	        }
+	        String password = (String) payload.get("password");
+	        //비밀번호 유효성 검증을 해서 boolean값을 반환
+	        boolean isValid = chatRoomService.validatePassword(roomId, password);
+	        
+	        //map에 valid를 key에 비밀번호 유효성 검증 로직을 마친 값을 넣음
+	        Map<String, Boolean> response = new HashMap<>();
+	        response.put("valid", isValid);
+	        
+	        //map을 화면으로 반환
+	        return ResponseEntity.ok(response);
+	    }
 }

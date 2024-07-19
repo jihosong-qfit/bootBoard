@@ -2,12 +2,14 @@ package com.board.qfit.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.board.qfit.dto.ChatRoomDTO;
 import com.board.qfit.dto.ChatRoomForm;
+import com.board.qfit.dto.ChatUser;
 import com.board.qfit.dto.MemberDTO;
 import com.board.qfit.repository.ChatRoomRepository;
 import com.board.qfit.repository.MemberRepository;
@@ -28,7 +30,15 @@ public class ChatRoomService {
 		chatRoomDTO.setPassword(chatRoomForm.getPassword());
 		chatRoomDTO.setLimit(chatRoomForm.getLimit());
 		chatRoomDTO.setHost(chatRoomForm.getHost());
+		
+		//채팅방 생성
 		chatRoomRepository.chatCreate(chatRoomDTO);
+		
+		//생성된 채팅방 id 가져오기
+		Long chatRoomId = chatRoomDTO.getId();
+		
+		//방장이 memberid를 가지고 있으므로 chat_room_members 테이블에 추가
+//		chatRoomRepository.addUserToChatRoom(chatRoomId, chatRoomForm.getHost());
 	}
 	
 	//채팅방 목록 조회
@@ -36,15 +46,9 @@ public class ChatRoomService {
 		return chatRoomRepository.chatList();
 	}
 	
-//	//입장 시 접속자 추가------
-//	public void addUserToRoom(Long chatRoomId, String memberId) {
-//        chatRepository.addUserToRoom(chatRoomId, memberId);
-//    }
-//
-//	//나가기 시 접속자 제거
-//    public void removeUserFromRoom(Long chatRoomId, String memberId) {
-//        chatRepository.removeUserFromRoom(chatRoomId, memberId);
-//    }
+	public void addUserToChatRoom(String userId, String username) {
+        chatRoomRepository.addUserToChatRoom(userId, username);
+    }
 	
     //접속자 목록 관리
     public List<MemberDTO> getUsersInRoom(Long chatRoomId) {
@@ -91,39 +95,11 @@ public class ChatRoomService {
     }
 
     //강퇴버튼
-    public boolean kickUser(String chatRoomId, String username) {
-        if (chatRoomId == null || username == null) {
-            return false;
-        }
-
-        try {
-            ChatRoomDTO chatRoom = chatRoomRepository.chatRoom(Long.parseLong(chatRoomId));
-            if (chatRoom != null) {
-                MemberDTO member = memberRepository.findByUsername(username);
-                if (member != null) {
-                    List<MemberDTO> members = chatRoom.getMembers();
-                    if (members == null) {
-                        members = new ArrayList<>();
-                    }
-                    if (members.contains(member)) {
-                        members.remove(member);
-                        chatRoom.setMembers(members);
-                        chatRoomRepository.updateChatRoom(chatRoom);
-                        return true;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+    public void kickUser(String userId) {
+        chatRoomRepository.kickUser(userId);
     }
-
-
+    
     //채팅내용 갱신
-//    public List<ChatRoomDTO> getMessages(Long chatRoomId) {
-//        return chatRoomRepository.findMessagesByChatRoomId(chatRoomId);
-//    }
     public List<ChatRoomDTO> getMessages(Long chatRoomId) {
         List<ChatRoomDTO> messages = chatRoomRepository.findMessagesByChatRoomId(chatRoomId);
         messages.forEach(message -> {
@@ -134,6 +110,20 @@ public class ChatRoomService {
         });
         return messages; //귓속말 생성자에 해당하는 것으로 메시지 전송
     }
+    
+    //채팅방 목록 조회
+  	public List<ChatUser> getChatUser() {
+  		return chatRoomRepository.getChatUser();
+  	}
+
+  	//채팅방 입장시 비밀번호 유효성 검증
+	public boolean validatePassword(Long roomId, String password) {
+		ChatRoomDTO chatRoom = chatRoomRepository.chatRoom(roomId);
+        if (chatRoom != null) {
+            return chatRoom.getPassword().equals(password);
+        }
+        return false;
+	}
 
 	
 }

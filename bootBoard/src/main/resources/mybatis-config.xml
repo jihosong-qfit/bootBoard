@@ -8,5 +8,6 @@
         <typeAlias type="com.board.qfit.dto.MemberDTO" alias="member"></typeAlias>
         <typeAlias type="com.board.qfit.dto.CommentDTO" alias="comment"></typeAlias>
         <typeAlias type="com.board.qfit.dto.ChatRoomDTO" alias="chat"></typeAlias>
+        <typeAlias type="com.board.qfit.dto.ChatUser" alias="chatuser"></typeAlias>
     </typeAliases>
 </configuration>
