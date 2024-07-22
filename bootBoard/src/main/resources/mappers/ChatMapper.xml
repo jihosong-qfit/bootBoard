@@ -93,17 +93,32 @@
         ORDER BY created_at ASC
     </select>
     
+    <!-- 채팅방 입장 시 접속자 수 증가 -->
 	<update id="incrementConnectedUsers" parameterType="long">
 	    UPDATE chat_room
 	    SET connected_users = connected_users + 1
 	    WHERE id = #{chatRoomId}
 	</update>
 	
+	<!-- 채팅방 입장 시 접속자 수 줄어듬 -->
 	<update id="decrementConnectedUsers" parameterType="long">
 	    UPDATE chat_room
 	    SET connected_users = connected_users - 1
 	    WHERE id = #{chatRoomId}
 	</update>
+	
+	<!-- 채팅방 입장 시 유저정보 인서트 -->
+	<insert id="addUserToRoom">
+        INSERT INTO chat_user (chat_room_id, user_id) 
+        VALUES (#{chatRoomId}, #{userId})
+    </insert>
+    
+    <!-- 채팅방 나가기 시 유저정보 삭제 -->
+    <delete id="removeUserFromRoom">
+        DELETE FROM chat_user 
+        WHERE chat_room_id = #{chatRoomId}
+        AND user_id = #{userId}
+    </delete>
 	
 	<select id="getConnectedUsers" resultType="int">
 	    SELECT connected_users
@@ -159,9 +174,12 @@
         WHERE user_id = #{userId}
     </delete>
     
-    <!-- 채팅방 입장 시 db 중복체크 -->
-    <select id="checkUserExists" parameterType="string" resultType="int">
-        SELECT COUNT(*) FROM chat_user WHERE user_id = #{userId}
+    <!-- 사용자가 채팅방에 있는지 확인 -->
+    <select id="checkUserExists" resultType="int">
+        SELECT COUNT(*) 
+        FROM chat_user
+        WHERE chat_room_id = #{chatRoomId} 
+        AND user_id = #{userId}
     </select>
     
     <!-- 채팅방 유저 정보 가져오는 메서드 -->

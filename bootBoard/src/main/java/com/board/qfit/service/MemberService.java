@@ -55,4 +55,10 @@ public class MemberService {
 		memberRepository.deleteMember(memberId);
 	}
 	
+	//관리자인지 확인
+	public boolean isAdmin(String memberId) {
+		MemberDTO member = memberRepository.findById(memberId);
+		return member.getRole().equals("ROLE_ADMIN");
+	}
+	
 }

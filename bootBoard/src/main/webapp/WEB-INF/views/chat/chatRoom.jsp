@@ -43,17 +43,7 @@
         <button id="exitButton">나가기</button>
         <h3>접속자 목록</h3>
         <ul id="userList">
-            <%-- <c:forEach var="user" items="${chatRoom.members}">
-        		<li data-user-id="${user.userId}">
-		            ${user.name} <c:if test="${chatRoom.host eq user.userId}">(방장)</c:if>
-		            <button class="whisperButton">귓속말</button>
-            		<c:if test="${chatRoom.host eq sessionScope.memberId}">
-		                <c:if test="${chatRoom.host ne user.userId}">
-		                    <button class="kick-button" data-user-id="${user.userId}">강퇴</button>
-		                </c:if>
-            		</c:if>
-       			 </li>
-    		</c:forEach> --%>
+            
         </ul>
     </div>
     <script>
@@ -68,7 +58,7 @@
     	 document.getElementById('exitButton').addEventListener('click', function() {
              if (confirm('채팅방이 종료됩니다. 나가시겠습니까?')) {
                  $.ajax({
-                     url: '${pageContext.request.contextPath}/chat/removeUser',
+                     url: '${pageContext.request.contextPath}/chat/leaveRoom',
                      type: 'POST',
                      data: JSON.stringify({
                          chatRoomId: ${chatRoom.id},
@@ -83,13 +73,13 @@
          });
     	 
      	<!-- 브라우저에서 뒤로가기 채팅방 나가기 -->
-    	 window.addEventListener('beforeunload', function(event) {
-             const payload = JSON.stringify({
-                 chatRoomId: ${chatRoom.id},
-                 memberId: sender
-             });
-             navigator.sendBeacon('${pageContext.request.contextPath}/chat/removeUser', payload);
-         });
+     	window.addEventListener('beforeunload', function(event) {
+            const payload = JSON.stringify({
+                chatRoomId: chatRoomId,
+                memberId: sender
+            });
+            navigator.sendBeacon('${pageContext.request.contextPath}/chat/leaveRoom', payload);
+        });
     	 
         <!-- 귓속말 -->
         $(document).on('click', '.whisperButton', function() {
@@ -225,11 +215,9 @@
                 type: 'GET',
                 data: { chatRoomId: chatRoomId },
                 success: function(users) {
-                	console.log("반환 데이터 구조: ", users);
                     const userList = document.getElementById('userList');
                     userList.innerHTML = '';
                     users.forEach(function(user) {
-                    	console.log("User ID: " + user.userId, "Member ID: " + user.memberId, "Name: " + user.name);
                         const isHost = user.memberId === chatRoomHost;
                         const isCurrentUserHost = sender === chatRoomHost;
                         userList.innerHTML += '<li data-user-id="' + user.userId + '" data-username="' + user.name + '">' +

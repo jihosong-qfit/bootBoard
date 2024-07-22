@@ -46,9 +46,10 @@ public class ChatRoomService {
 		return chatRoomRepository.chatList();
 	}
 	
-	public void addUserToChatRoom(String userId, String username) {
-        chatRoomRepository.addUserToChatRoom(userId, username);
-    }
+	//채팅방 입장 시 유저id, 유저이름 정보 테이블에 추가
+//	public void addUserToChatRoom(String userId, String username) {
+//        chatRoomRepository.addUserToChatRoom(userId, username);
+//    }
 	
     //접속자 목록 관리
     public List<MemberDTO> getUsersInRoom(Long chatRoomId) {
@@ -65,14 +66,6 @@ public class ChatRoomService {
 		ChatRoomDTO chatRoom = chatRoomRepository.chatRoom(id); //채팅방 상세 조회
 		return chatRoom;
 	}
-	
-	public void enterRoom(Long chatRoomId) {
-        chatRoomRepository.incrementConnectedUsers(chatRoomId);
-    }
-
-    public void leaveRoom(Long chatRoomId) {
-        chatRoomRepository.decrementConnectedUsers(chatRoomId);
-    }
 
     public int getConnectedUsers(Long chatRoomId) {
         return chatRoomRepository.getConnectedUsers(chatRoomId);
@@ -118,5 +111,33 @@ public class ChatRoomService {
         }
         return false;
 	}
+
+	//사용자 채팅방 입장
+	public boolean enterRoom(Long chatRoomId, String userId) {
+		ChatRoomDTO room = chatRoomRepository.chatRoom(chatRoomId);
+		
+		// 이미 접속 중인 경우 접속자 수의 증가 없이 입장처리만
+        if (checkUserExists(chatRoomId, userId)) {
+            return true;
+        }
+		
+        if (room.getConnectedUsers() < room.getLimit()) { //최대 인원수를 초과하지 않을 때만
+            chatRoomRepository.incrementConnectedUsers(chatRoomId); //입장 시 접속자수 증가
+            chatRoomRepository.addUserToRoom(chatRoomId, userId); //입장 시 유저정보 인서트
+            return true;
+        }
+        return false;
+	}
+
+	//사용자 채팅방 나가기
+	public void leaveRoom(Long chatRoomId, String userId) {
+        chatRoomRepository.decrementConnectedUsers(chatRoomId); //나가기 시 접속자수 줄어듬
+        chatRoomRepository.removeUserFromRoom(chatRoomId, userId); //나가기 시 유저정보 삭제
+    }
+	
+	// 사용자가 채팅방에 있는지 확인하는 메서드
+    public boolean checkUserExists(Long chatRoomId, String userId) {
+        return chatRoomRepository.checkUserExists(chatRoomId, userId);
+    }
 	
 }

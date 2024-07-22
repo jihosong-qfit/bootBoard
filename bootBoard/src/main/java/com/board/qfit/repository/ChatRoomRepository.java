@@ -1,5 +1,6 @@
 package com.board.qfit.repository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -84,14 +85,7 @@ public class ChatRoomRepository {
 		sql.delete("Chat.kickUser", userId);
 	}
 
-	//채팅방에 멤버 정보 추가, DB에 중복 추가 불가
-	public void addUserToChatRoom(String userId, String username) {
-        int userExists = sql.selectOne("Chat.checkUserExists", userId);
-        if (userExists == 0) {
-            sql.insert("Chat.addUserToChatRoom", 
-                Map.of("userId", userId, "username", username));
-        }
-    }
+	
 	
 	//채팅내용 수신
 	public List<ChatRoomDTO> findMessagesByChatRoomId(Long chatRoomId) {
@@ -107,5 +101,38 @@ public class ChatRoomRepository {
 	public List<ChatUser> getChatUser() {
 		return sql.selectList("Chat.getChatUser");
 	}
+
+	//사용자가 채팅방에 있는지 확인, DB에 중복 추가 불가
+	public boolean checkUserExists(Long chatRoomId, String userId) {
+		int count = sql.selectOne("Chat.checkUserExists", new HashMap<String, Object>() {{
+            put("chatRoomId", chatRoomId);
+            put("userId", userId);
+        }});
+        return count > 0;
+	}
+	
+	//채팅방 입장 시 유저 정보 추가
+	public void addUserToRoom(Long chatRoomId, String userId) {
+		//이미 채팅방에 있는 사용자는 유저 정보 또 추가하지 않도록 사용자의 채팅방 정보가 테이블에 없을 때만 추가해준다.
+		if (!checkUserExists(chatRoomId, userId)) {
+			Map<String, Object> params = new HashMap<>();
+	        params.put("chatRoomId", chatRoomId);
+	        params.put("userId", userId);
+	        sql.insert("Chat.addUserToRoom", params);	
+		}
+	}
+
+	//채팅방 나가기 시 메서드
+	public void removeUserFromRoom(Long chatRoomId, String userId) {
+		 Map<String, Object> params = new HashMap<>();
+	        params.put("chatRoomId", chatRoomId);
+	        params.put("userId", userId);
+	        sql.delete("Chat.removeUserFromRoom", params);
+	}
+	
+	// 채팅방의 현재 접속자 수를 반환하는 메서드
+    public int countUsersInRoom(Long chatRoomId) {
+        return sql.selectOne("Chat.countUsersInRoom", chatRoomId);
+    }
 
 }

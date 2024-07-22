@@ -8,6 +8,8 @@
 </head>
 <body>
 <input type="hidden" id="memberId" value="${sessionScope.memberId}"/>
+<input type="hidden" id="userRole" value="${sessionScope.role}"/>
+<h2>채팅방 목록</h2>
     <table id="chatRoomsTable" border="1">
         <thead>
             <tr>
@@ -25,7 +27,17 @@
                     <td>${room.connectedUsers}/${room.limit}</td>
                     <td>${room.host}</td>
                     <td>${room.password != null ? 'Y' : 'N'}</td>
-                    <td><button class="enterRoomButton" data-roomid="${room.id}" data-password="${room.password != null ? 'Y' : 'N'}">입장하기</button></td>
+                    <%-- <td><button class="enterRoomButton" data-roomid="${room.id}" data-password="${room.password != null ? 'Y' : 'N'}">입장하기</button></td> --%>
+                    <td>
+                        <c:choose>
+                            <c:when test="${room.connectedUsers >= room.limit && sessionScope.role != 'ROLE_ADMIN'}">
+                                <button class="enterRoomButton" disabled>입장 불가</button>
+                            </c:when>
+                            <c:otherwise>
+                                <button class="enterRoomButton" data-roomid="${room.id}" data-password="${room.password != null ? 'Y' : 'N'}">입장하기</button>
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
                 </tr>
             </c:forEach>
         </tbody>
@@ -43,33 +55,53 @@
     
 </body>
 <script>
-//특정 채팅방 접속자 수만 업데이트
-	function updateConnectedUsers(roomId) {
+	//특정 채팅방 접속자 수만 업데이트
+	function updateConnectedUsers(roomId, memberId, userRole) {
 	    $.ajax({
-	        url: '${pageContext.request.contextPath}/chat/getConnectedUsers',
 	        type: 'GET',
-	        data: { roomId: roomId },
+	        url: '${pageContext.request.contextPath}/chat/getConnectedUsers',
+	        contentType: 'application/x-www-form-urlencoded',
+	        data: { 
+	        	roomId: roomId,
+	        	memberId: memberId 
+	        },
 	        success: function(response) {
+	        	console.log("Response from server for room " + roomId + ": ", response);
 	            const row = $('button[data-roomid="' + roomId + '"]').closest('tr');
 	            row.find('td').eq(1).text(response.connectedUsers + '/' + response.limit);
+	            if (response.connectedUsers >= response.limit && !response.alreadyConnected && userRole !== 'ROLE_ADMIN') {
+                    row.find('.enterRoomButton').prop('disabled', true).text('입장 불가');
+                } else {
+                    row.find('.enterRoomButton').prop('disabled', false).text('입장하기');
+                }
 	        },
 	        error: function(xhr, status, error) {
 	            console.error('Error:', error);
 	        }
 	    });
-	}
+	}//end func
 	
-	function updateAllChatRooms() {
+	function updateAllChatRooms(memberId, userRole) {
 	    $('.enterRoomButton').each(function() {
 	        var roomId = $(this).data('roomid');
-	        updateConnectedUsers(roomId);
+	        console.log("log updateAllchatRooms: " + memberId);
+	        updateConnectedUsers(roomId, memberId, userRole);
 	    });
-	}
+	}//end func
 
+	$(document).ready(function() {
+    	var memberId = $('#memberId').val();
+    	var userRole = $('#userRole').val();
+        setInterval(function() {
+        	updateAllChatRooms(memberId, userRole);
+        }, 1000);
+    
 	// 입장하기 버튼 클릭 이벤트 처리
     $(document).on('click', '.enterRoomButton', function() {
         var roomId = $(this).data('roomid');
         var hasPassword = $(this).data('password') === 'Y';
+        var memberId = $('#memberId').val();
+        var userRole = $('#userRole').val();        
         
         if (hasPassword) {
             $('#passwordModal').show();
@@ -86,8 +118,8 @@
                    			 password: password
                 		}),
                         success: function(response) {
-                            if (response.valid) {
-                                window.location.href = '${pageContext.request.contextPath}/chat/chatRoom/' + roomId;
+                        	if (response.valid) {
+                                enterChatRoom(roomId, memberId);
                             } else {
                                 alert('비밀번호가 틀렸습니다. 비밀번호를 다시 입력해주세요!');
                             }
@@ -101,13 +133,32 @@
                 $('#passwordModal').hide();
             });
         } else {
-        		window.location.href = '${pageContext.request.contextPath}/chat/chatRoom/' + roomId;	
+        	enterChatRoom(roomId, memberId, userRole);
         }
     });
 	
-    $(document).ready(function() {
-        setInterval(updateAllChatRooms, 5000);
-        
-    });
-    </script>
+    function enterChatRoom(roomId, memberId, userRole) {
+	    $.ajax({
+	        url: '${pageContext.request.contextPath}/chat/enterRoom',
+	        type: 'POST',
+	        contentType: 'application/json',
+	        data: JSON.stringify({
+	            roomId: roomId,
+	            memberId: memberId,
+	            userRole, userRole
+	        }),
+	        success: function() {
+	            window.location.href = '${pageContext.request.contextPath}/chat/chatRoom/' + roomId;
+	        },
+	        error: function(xhr) {
+	            if (xhr.responseText) {
+	                alert(xhr.responseText);
+	            } else {
+	                alert('채팅방 입장에 실패했습니다.');
+	            }
+	        }
+	    });
+	}
+});
+</script>
 </html>
