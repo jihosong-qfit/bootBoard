@@ -3,38 +3,46 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="Board">
-	<insert id="save" parameterType="board"> <!-- => <typeAlias type="com.board.qfit.dto.BoardDTO" alias="board"></typeAlias> -->
+
+	<insert id="save" parameterType="board">
 		insert into board(title, writer, content, member_id)
 		values(#{title}, #{writer}, #{content}, #{memberId})
 	</insert>
+	
 	<select id="saveMemberId" parameterType="map" resultType="board">
         SELECT boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') AS createdate, hit, member_id AS memberId
         FROM board
         WHERE boardno = #{boardno} AND member_id = #{memberId}
     </select>
+    
 	<select id="findAll" resultType="board">
 		select boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') as createdate, hit
 		from board 
 		order by boardno desc
 	</select>
+	
 	<select id="findById" parameterType="Long" resultType="board">
 		select boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') as createdate, hit 
 		from board
 		where boardno=#{boardno}
 	</select>
+	
 	<update id="updateHits" parameterType="Long">
 		update board 
 		set hit = hit + 1
 		where boardno=#{boardno}
 	</update>
+	
 	<delete id="delete" parameterType="Long">
 		delete from board where boardno=#{boardno}
 	</delete>
+	
 	<update id="update" parameterType="board">
 		update board
 		set title=#{title}, content=#{content}
 		where boardno=#{boardno}
 	</update>
+	
     <select id="findAllPaging" parameterType="map" resultType="board">
         SELECT boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') as createdate, hit, member_id as memberId
         FROM (
@@ -48,21 +56,19 @@
         )
         WHERE rnum &gt; #{offset}
     </select>
+    
     <select id="isBoardWriter" parameterType="map" resultType="int">
         SELECT COUNT(*)
         FROM board
         WHERE boardno = #{boardno} AND member_id = #{memberId}
     </select>
+    
     <select id="countAll" resultType="int">
         SELECT COUNT(*) 
         FROM board
      </select>
-        <!--<select id="searchTitle" parameterType="string" resultType="board">
-        SELECT boardno, title, writer, content, createdate, hit
-        FROM board
-        WHERE title LIKE '%' || #{title} || '%'
-        ORDER BY boardno DESC
-    </select> -->
+    
+    <!-- 제목, 작성자, 내용으로 게시글 검색 -->
      <select id="searchByTitleWriter" parameterType="map" resultType="board">
         SELECT boardno, title, writer, content, TO_CHAR(createdate, 'YYYY-MM-DD') AS createdate, hit, member_id AS memberId
         FROM (
@@ -75,6 +81,6 @@
             ) a
             WHERE ROWNUM &lt;= #{offset} + #{limit}
         )
-        WHERE rnum > #{offset}
+        WHERE rnum &gt; #{offset}
     </select>
 </mapper>        

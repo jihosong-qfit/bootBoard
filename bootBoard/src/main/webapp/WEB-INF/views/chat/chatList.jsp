@@ -4,7 +4,7 @@
 <html>
 <head>
     <title>채팅방 목록</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 <input type="hidden" id="memberId" value="${sessionScope.memberId}"/>
@@ -40,6 +40,11 @@
                     </td>
                 </tr>
             </c:forEach>
+             <c:if test="${empty chatRooms}">
+                <tr>
+                    <td colspan="5">채팅방이 없습니다.</td>
+                </tr>
+            </c:if>
         </tbody>
     </table>
     
@@ -68,12 +73,23 @@
 	        success: function(response) {
 	        	console.log("Response from server for room " + roomId + ": ", response);
 	            const row = $('button[data-roomid="' + roomId + '"]').closest('tr');
-	            row.find('td').eq(1).text(response.connectedUsers + '/' + response.limit);
-	            if (response.connectedUsers >= response.limit && !response.alreadyConnected && userRole !== 'ROLE_ADMIN') {
-                    row.find('.enterRoomButton').prop('disabled', true).text('입장 불가');
-                } else {
-                    row.find('.enterRoomButton').prop('disabled', false).text('입장하기');
-                }
+	            
+	            if (response.connectedUsers === -1) {
+	                row.remove(); // 접속자 수가 0인 채팅방은 목록에서 제거
+	            } else {
+	                row.find('td').eq(1).text(response.connectedUsers + '/' + response.limit);
+	                if (response.connectedUsers >= response.limit && !response.alreadyConnected && userRole !== 'ROLE_ADMIN') {
+	                    row.find('.enterRoomButton').prop('disabled', true).text('입장 불가');
+	                } else {
+	                    row.find('.enterRoomButton').prop('disabled', false).text('입장하기');
+	                }
+	            }
+	            
+	            // 남은 채팅방이 없는 경우 메시지 추가
+	            if ($('#chatRoomsTable tbody tr').length === 0) {
+	                $('#chatRoomsTable tbody').append('<tr><td colspan="5">채팅방이 없습니다.</td></tr>');
+	            }
+	            
 	        },
 	        error: function(xhr, status, error) {
 	            console.error('Error:', error);
@@ -145,7 +161,7 @@
 	        data: JSON.stringify({
 	            roomId: roomId,
 	            memberId: memberId,
-	            userRole, userRole
+	            userRole: userRole
 	        }),
 	        success: function() {
 	            window.location.href = '${pageContext.request.contextPath}/chat/chatRoom/' + roomId;

@@ -22,6 +22,7 @@ public class ChatRoomDTO {
 	private String recipient;
 	private String message;
 	private boolean whisper;
+	private String createdAt;
 	
 	public ChatRoomDTO() {}
 	

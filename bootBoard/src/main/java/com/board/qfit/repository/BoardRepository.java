@@ -20,7 +20,7 @@ public class BoardRepository {
 	
 	//게시글 등록
 	public int save(BoardDTO boardDTO) {
-		return sql.insert("Board.save", boardDTO); //<mapper namespace="Board">
+		return sql.insert("Board.save", boardDTO);
 	}
 
 	//게시글 목록
@@ -28,18 +28,22 @@ public class BoardRepository {
 		return sql.selectList("Board.findAll");
 	}
 
+	//게시글 상세
 	public BoardDTO findById(Long boardno) {
 		return sql.selectOne("Board.findById", boardno);
 	}
 
+	//조회수 업데이트
 	public void updateHits(Long boardno) {
 		sql.update("Board.updateHits", boardno);
 	}
 
+	//게시글 삭제
 	public void delete(Long boardno) {
 		sql.delete("Board.delete", boardno);
 	}
 
+	//게시글 수정
 	public void update(BoardDTO boardDTO) {
 		sql.update("Board.update", boardDTO);
 	}
@@ -49,10 +53,12 @@ public class BoardRepository {
 		return sql.selectList("Board.findAllPaging", pageInfo);
 	}
 
+	//전체 게시글 개수 가져오기
 	public int countAll() {
 		return sql.selectOne("Board.countAll");
 	}
 
+	//제목으로 검색
 	public List<BoardDTO> searchTitle(String title) {
 		return sql.selectList("Board.searchTitle", title);
 	}
@@ -71,6 +77,7 @@ public class BoardRepository {
         return count > 0;
     }
 
+	//제목, 작성자, 내용으로 게시글 검색
 	public List<BoardDTO> searchByTitleWriter(Map<String, Object> searchInfo) {
 		return sql.selectList("Board.searchByTitleWriter", searchInfo);
 	}

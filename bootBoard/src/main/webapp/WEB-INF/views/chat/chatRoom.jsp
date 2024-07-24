@@ -1,67 +1,75 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <html>
 <head>
-    <title>채팅방: ${chatRoom.name}</title>
-    <style>
-        #chatContent {
-            border: 1px solid #ddd;
-            height: 300px;
-            overflow-y: scroll;
-            margin-bottom: 10px;
-        }
-        #userList {
-            list-style-type: none;
-            padding: 0;
-        }
-        #userList li {
-            margin: 5px 0;
-        }
-        .whisper {
-            color: grey;
-        }
-        .admin {
-            color: red;
-        }
-    </style>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<title>채팅방: ${chatRoom.name}</title>
+<style>
+#chatContent {
+	border: 1px solid #ddd;
+	height: 300px;
+	overflow-y: scroll;
+	margin-bottom: 10px;
+}
+
+#userList {
+	list-style-type: none;
+	padding: 0;
+}
+
+#userList li {
+	margin: 5px 0;
+}
+
+.whisper {
+	color: grey;
+}
+
+.admin {
+	color: red;
+}
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <div>
-        <h2>채팅방: ${chatRoom.name}</h2>
-        <div id="chatContent">
-            <!-- 채팅 내용 출력 -->
-        </div>
-        <form id="chatForm">
-            <input type="text" id="message" name="message">
-            <input type="hidden" id="sender" name="sender" value="${sessionScope.memberId}">
-            <input type="hidden" id="recipient" name="recipient" value="${sessionScope.username}">
-            <input type="hidden" id="chatRoomId" name="chatRoomId" value="${chatRoom.id}">
-            <button type="submit">전송</button>
-        </form>
-        <button id="exitButton">나가기</button>
-        <h3>접속자 목록</h3>
-        <ul id="userList">
-            
-        </ul>
-    </div>
-    <script>
+	<div>
+		<h2>채팅방: ${chatRoom.name}</h2>
+		<p>방장: ${chatRoom.host}</p>
+		<div id="chatContent">
+			<!-- 채팅 내용 출력 -->
+		</div>
+		<form id="chatForm">
+			<input type="text" id="message" name="message"> <input
+				type="hidden" id="sender" name="sender"
+				value="${sessionScope.memberId}"> <input type="hidden"
+				id="recipient" name="recipient" value="${sessionScope.username}">
+			<input type="hidden" id="chatRoomId" name="chatRoomId"
+				value="${chatRoom.id}">
+			<button type="submit">전송</button>
+		</form>
+		<button id="exitButton">나가기</button>
+
+		<h3>접속자 목록</h3>
+		<ul id="userList">
+			<!-- 접속자 목록 출력 -->
+		</ul>
+	</div>
+	<script>
     	const sender = $('#sender').val();
-    	var chatRoomHost = "${chatRoom.host}";
+    	const chatRoomHost = '${chatRoom.host}';
     	const chatRoomId = '${chatRoom.id}';
-    	var userId = "${chatUsers.userId}";
+    	console.log('chatRoomId:', chatRoomId);
     	let isWhisperMode = false; //귓속말모드|일반모드
     	let whisperRecipient = null;
     	
-    	<!-- 채팅방 나가기 -->
+    	// 채팅방 나가기
     	 document.getElementById('exitButton').addEventListener('click', function() {
              if (confirm('채팅방이 종료됩니다. 나가시겠습니까?')) {
                  $.ajax({
                      url: '${pageContext.request.contextPath}/chat/leaveRoom',
                      type: 'POST',
                      data: JSON.stringify({
-                         chatRoomId: ${chatRoom.id},
+                         chatRoomId: chatRoomId,
                          memberId: sender
                      }),
                      contentType: 'application/json',
@@ -72,7 +80,7 @@
              }
          });
     	 
-     	<!-- 브라우저에서 뒤로가기 채팅방 나가기 -->
+     	// 브라우저에서 뒤로가기 채팅방 나가기
      	window.addEventListener('beforeunload', function(event) {
             const payload = JSON.stringify({
                 chatRoomId: chatRoomId,
@@ -81,7 +89,7 @@
             navigator.sendBeacon('${pageContext.request.contextPath}/chat/leaveRoom', payload);
         });
     	 
-        <!-- 귓속말 -->
+        // 귓속말
         $(document).on('click', '.whisperButton', function() {
             const username = $(this).parent().data('username');
             whisperRecipient = username;
@@ -89,11 +97,11 @@
             alert(username + "님에게 귓속말 모드가 활성화되었습니다. 이제 메시지를 입력하세요.");
         });
         
-        <!-- 채팅메시지 전송 -->
+        // 채팅메시지 전송
         document.getElementById('chatForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const message = document.getElementById('message').value.trim();
-            const chatRoomId = ${chatRoom.id};
+            const chatRoomId = '${chatRoom.id}';
             const sender = document.getElementById('sender').value.trim();
             
             if (!message) {
@@ -150,7 +158,7 @@
             }
         });
         
-        <!-- 강퇴버튼 -->
+        // 강퇴버튼
         $(document).on('click', '.kick-button', function() {
         	const userId = $(this).closest('li').data('user-id');
          	// userId가 유효한지 확인
@@ -164,13 +172,13 @@
                 url: '/chat/kickUser',
                 contentType: 'application/x-www-form-urlencoded',
                 data: {
-                	userId: userId
+                	userId: userId,
+                	chatRoomId: chatRoomId
                 },
                 success: function(response) {
-                	
                     if (response === 'success') {
                         $('li[data-user-id="' + userId + '"]').remove();
-                        alert(userId + "가 강제퇴장 되었습니다.")
+                        alert(userId + "가 강제퇴장 되었습니다.");
                     } else {
                         alert('강퇴 실패!!');
                     }
@@ -181,14 +189,35 @@
             });
         });
 
+        // 강제 퇴장 여부 확인
+        function checkKickStatus() {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/chat/checkKickStatus',
+                type: 'GET',
+                data: { 
+                	userId: sender,
+                	chatRoomId: chatRoomId 
+                },
+                success: function(response) {
+                    if (response.kicked) {
+                        alert('강제 퇴장 되었습니다.');
+                        window.location.href = '${pageContext.request.contextPath}/chat/chatList';
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('Error: ' + textStatus);
+                    console.log('Error Thrown: ' + errorThrown);
+                }
+            });
+        }
 
-        <!-- 실시간 메시지 갱신 -->
+        // 실시간 메시지 업데이트
         function getMessages() {
             $.ajax({
                 url: '${pageContext.request.contextPath}/chat/getMessages',
                 type: 'GET',
                 data: {
-                    chatRoomId: '${chatRoom.id}'
+                    chatRoomId: chatRoomId
                 },
                 success: function(response) {
                     const chatContent = document.getElementById('chatContent');
@@ -208,12 +237,15 @@
             });
         }
 
-        <!-- 입장 시 접속자 목록 업데이트 -->
+        // 입장 시 접속자 목록 업데이트
         function getUsers() {
+        	const chatRoomId = $('#chatRoomId').val();
             $.ajax({
                 url: '${pageContext.request.contextPath}/chat/getUsersInRoom',
                 type: 'GET',
-                data: { chatRoomId: chatRoomId },
+                data: { 
+                	chatRoomId: chatRoomId 
+                },
                 success: function(users) {
                     const userList = document.getElementById('userList');
                     userList.innerHTML = '';
@@ -234,9 +266,9 @@
             });
         }
 
-        	setInterval(getUsers, 500);
-        	setInterval(getMessages, 500);
-        
+        setInterval(getUsers, 500);
+        setInterval(getMessages, 500);
+        setInterval(checkKickStatus, 1000);
     </script>
 </body>
 </html>

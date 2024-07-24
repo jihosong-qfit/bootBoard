@@ -47,10 +47,6 @@
         INSERT INTO chat_room (id, name, password, limit, host)
         VALUES (#{id}, #{name}, #{password}, #{limit}, #{host})
     </insert>
-	<!-- <insert id="chatCreate" parameterType="chat">
-        INSERT INTO chat_room (name, password, limit, host)
-        VALUES (#{name}, #{password}, #{limit}, #{host})
-    </insert> -->
 
 	<!-- 채팅방 목록 조회 -->
     <select id="chatList" resultType="chat">
@@ -108,7 +104,7 @@
 	</update>
 	
 	<!-- 채팅방 입장 시 유저정보 인서트 -->
-	<insert id="addUserToRoom">
+	<insert id="addUserToRoom" parameterType="map">
         INSERT INTO chat_user (chat_room_id, user_id) 
         VALUES (#{chatRoomId}, #{userId})
     </insert>
@@ -120,20 +116,21 @@
         AND user_id = #{userId}
     </delete>
 	
-	<select id="getConnectedUsers" resultType="int">
+	<!-- 채팅방 접속자수 가져오기 -->
+	<select id="getConnectedUsers" resultType="int" parameterType="long">
 	    SELECT connected_users
+	    FROM chat_room
+	    WHERE id = #{chatRoomId}
+	</select>
+	
+	<!-- 접속자 최대인원 가져오기 -->
+	<select id="getUserLimit" resultType="int" parameterType="long">
+	    SELECT limit
 	    FROM chat_room
 	    WHERE id = #{chatRoomId}
 	</select>
 
 	<!-- 접속자 목록 관리 -->
-    <!-- <select id="getUsersInRoom" resultType="member">
-        SELECT m.member_id, m.name, m.nickname, m.role
-        FROM member m
-        	JOIN chat_room cr 
-        		ON cr.id = #{chatRoomId}
-        WHERE m.is_connected = 1
-    </select> -->
 	<select id="getUsersInRoom" resultMap="memberResultMap">
 	    SELECT 
 	        m.member_id, 
@@ -169,13 +166,14 @@
     </update>
     
     <!-- 강퇴 -->
-    <delete id="kickUser" parameterType="string">
+    <delete id="kickUser" parameterType="map">
         DELETE FROM chat_user
-        WHERE user_id = #{userId}
+        WHERE chat_room_id = #{chatRoomId} 
+        AND user_id = #{userId}
     </delete>
     
     <!-- 사용자가 채팅방에 있는지 확인 -->
-    <select id="checkUserExists" resultType="int">
+    <select id="checkUserExists" parameterType="map" resultType="int">
         SELECT COUNT(*) 
         FROM chat_user
         WHERE chat_room_id = #{chatRoomId} 
@@ -187,4 +185,57 @@
     	SELECT user_id, username
     	FROM chat_user
     </select>
+    
+    <!-- 이전 채팅방 정보 검색 메서드 -->
+    <select id="searchByMessageSender" parameterType="map" resultType="chat">
+        SELECT id, chat_room_id, recipient, message, TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS createdAt, sender
+        FROM (
+            SELECT a.*, ROWNUM rnum
+            FROM (
+                SELECT id, chat_room_id, recipient, message, created_at, sender
+                FROM chat_messages
+                WHERE ${searchType} LIKE '%' || #{keyword} || '%'
+                ORDER BY id DESC
+            ) a
+            WHERE ROWNUM &lt;= #{offset} + #{limit}
+        )
+        WHERE rnum > #{offset}
+    </select>
+    
+    <!-- 이전 채팅방 정보 조회 메서드 -->
+    <select id="chatMessageList" parameterType="map" resultType="chat">
+        SELECT id, chat_room_id, recipient, message, TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS createdAt, sender
+        FROM (
+            SELECT a.*, ROWNUM rnum
+            FROM (
+                SELECT id, chat_room_id, recipient, message, created_at, sender
+                FROM chat_messages
+                ORDER BY id DESC
+            ) a
+            WHERE ROWNUM &lt;= #{offset} + #{limit}
+        )
+        WHERE rnum &gt; #{offset}
+    </select>
+
+	<!-- 접속자 수 0으로 설정 -->
+	<update id="setConnectedUsersZero" parameterType="long">
+		UPDATE chat_room
+		SET connected_users = 0
+		WHERE id = #{chatRoomId}
+	</update>
+
+	<!-- 채팅방 삭제 -->
+	<delete id="deleteChatRoom" parameterType="long">
+		DELETE FROM chat_room
+		WHERE id = #{chatRoomId}
+	</delete>
+
+	<!-- 채팅방 방장 가져오기 -->
+	<select id="getChatRoomHost" resultType="string"
+		parameterType="long">
+		SELECT host
+		FROM chat_room
+		WHERE id = #{chatRoomId}
+	</select>
+    
 </mapper>
